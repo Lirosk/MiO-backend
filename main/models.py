@@ -1,10 +1,13 @@
-from django.utils  import timezone
+from django.utils import timezone
 from django.apps import apps
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, UserManager
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.contrib.auth.hashers import make_password
 from django.utils.translation import gettext_lazy as _
+import jwt
+from django.conf import settings
+from datetime import datetime, timedelta
 
 
 class MyUserManager(UserManager):
@@ -14,7 +17,8 @@ class MyUserManager(UserManager):
         """
         if not email:
             raise ValueError("The given email must be set")
-        username = extra_fields.pop('username') if 'username' in extra_fields else  ''
+        username = extra_fields.pop(
+            'username') if 'username' in extra_fields else ''
         email = self.normalize_email(email)
         # Lookup the real model class from the global app registry so this
         # manager method can be used in migrations. This is fine because
@@ -44,13 +48,14 @@ class MyUserManager(UserManager):
 
         return self._create_user(email, password, username=username, **extra_fields)
 
+
 class TrackingModel(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        abstract=True
-        ordering=('-created_at', )
+        abstract = True
+        ordering = ('-created_at', )
 
 
 class MyUser(AbstractBaseUser, PermissionsMixin, TrackingModel):
@@ -74,7 +79,8 @@ class MyUser(AbstractBaseUser, PermissionsMixin, TrackingModel):
     is_staff = models.BooleanField(
         _("staff status"),
         default=False,
-        help_text=_("Designates whether the user can log into this admin site."),
+        help_text=_(
+            "Designates whether the user can log into this admin site."),
     )
     is_active = models.BooleanField(
         _("active"),
@@ -101,8 +107,15 @@ class MyUser(AbstractBaseUser, PermissionsMixin, TrackingModel):
 
     @property
     def token(self):
-        return ''
+        token = jwt.encode(
+            {
+                'email': self.email,
+                'exp': (datetime.utcnow() + timedelta(hours=24))
+            },
+            settings.SECRET_KEY
+        )
 
+        return token
 
 
 # @receiver(post_save, sender=settings.AUTH_USER_MODEL)
@@ -114,20 +127,26 @@ class MyUser(AbstractBaseUser, PermissionsMixin, TrackingModel):
 class CalendarEvent(models.Model):
     ...
 
+
 class KanbanCategories(models.Model):
     ...
+
 
 class KanbanEvent(models.Model):
     ...
 
+
 class SocialNetwork(models.Model):
     ...
+
 
 class ContentType(models.Model):
     ...
 
+
 class StatisticMetric(models.Model):
     ...
+
 
 class MetricValue(models.Model):
     ...
