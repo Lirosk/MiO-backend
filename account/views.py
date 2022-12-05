@@ -34,7 +34,7 @@ User = get_user_model()
 #         return Response(user is not None)
 
 
-class RegisterView(CreateAPIView):
+class RegisterAPIView(CreateAPIView):
     model = get_user_model()
     serializer_class = serializers.UserRegisterSerializer
     permission_classes = (AllowAny, )
