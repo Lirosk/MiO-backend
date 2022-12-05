@@ -1,5 +1,5 @@
 [run]
-source=auth/,
+source=auth/,main/
 omit=
     venv
     */migrations/*
