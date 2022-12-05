@@ -4,22 +4,18 @@ from django.contrib.auth import password_validation
 
 User = get_user_model()
 
-# class UserSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = User
-#         fields = ('email', 'password', )
-#         extra_kwargs = {'password': {'write_only: True'}}
-    
-#     def create(self, validated_data):
-#         user = User(**validated_data)
-#         user.save()
-#         return user
 
 class UserRegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('email', 'password', )
-        extra_kwargs = {'password': {'write_only': True, 'min_length': 8, 'max_length': 128}}
+        extra_kwargs = {
+            'password': {
+                'write_only': True,
+                'min_length': 8,
+                'max_length': 128
+            }
+        }
 
     def create(self, validated_data):
         user = User.objects.create_user(**validated_data)
@@ -30,5 +26,10 @@ class UserLoginSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('email', 'password', 'token', )
-        extra_kwargs = {'password': {'write_only': True, 'min_length': 8, 'max_length': 128}}
+        extra_kwargs = {
+            'password': {
+                'write_only': True,
+                'min_length': 8, 'max_length': 128
+            }
+        }
         read_only_fields = ['token']
