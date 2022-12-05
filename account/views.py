@@ -14,32 +14,20 @@ from . import serializers
 
 User = get_user_model()
 
-# class LoginView(APIView):
-#     authentication_classes = [SessionAuthentication, BasicAuthentication]
+class AuthUserAPIView(GenericAPIView):
+    permission_classes = (IsAuthenticated, )
 
-#     def get(self, request: HttpRequest, format=None):
-#         if request.method != 'GET':
-#             return HttpResponseBadRequest()
-
-#         content = {
-#             'username': str(request.GET['username']),
-#             'password': str(request.GET['password']),
-#         }
-
-#         user = authenticate(**content)
-
-#         if user is None:
-#             return HttpResponseBadRequest()
-
-#         return Response(user is not None)
-
+    def get(self, request):
+        user = request.user
+        serializer = serializers.UserRegisterSerializer(user)
+        return Response({'user': serializer.data})
 
 class RegisterAPIView(CreateAPIView):
     model = get_user_model()
     serializer_class = serializers.UserRegisterSerializer
     permission_classes = (AllowAny, )
 
-    def post(self, request: Request, *args, **kwargs):
+    def post(self, request: Request):
         serializer = self.serializer_class(data=request.data)
 
         if (serializer.is_valid()):

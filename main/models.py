@@ -112,7 +112,8 @@ class MyUser(AbstractBaseUser, PermissionsMixin, TrackingModel):
                 'email': self.email,
                 'exp': (datetime.utcnow() + timedelta(hours=24))
             },
-            settings.SECRET_KEY
+            settings.SECRET_KEY,
+            algorithms='HS256'
         )
 
         return token
