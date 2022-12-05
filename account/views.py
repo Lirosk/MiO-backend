@@ -1,15 +1,12 @@
-from rest_framework.authentication import SessionAuthentication, BasicAuthentication
+from . import serializers
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
-from rest_framework.views import APIView
 from rest_framework.generics import CreateAPIView, GenericAPIView
-from rest_framework.decorators import api_view
 from rest_framework import status
 from rest_framework.request import Request
-from django.http import HttpRequest, HttpResponseBadRequest, HttpResponse
 from django.contrib.auth import authenticate
 from django.contrib.auth import get_user_model
-from . import serializers
+
 
 
 User = get_user_model()

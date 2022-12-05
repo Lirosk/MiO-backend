@@ -1,6 +1,7 @@
+import jwt
+
 from rest_framework.authentication import get_authorization_header, BaseAuthentication
 from rest_framework.exceptions import AuthenticationFailed
-import jwt
 from django.conf import settings
 from django.contrib.auth import get_user_model
 
