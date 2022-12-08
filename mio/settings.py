@@ -30,7 +30,7 @@ SECRET_KEY = env('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 AUTH_USER_MODEL = 'main.MyUser'
 
@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'main',
     'account',
     'rest_framework',
+    # 'verify_email.apps.VerifyEmailConfig',
 ]
 
 MIDDLEWARE = [
@@ -56,7 +57,25 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'main.middlewares.my_middleware'
 ]
+
+# CORS_ALLOWED_ORIGINS = [
+#     '25.13.214.75'
+# ]
+
+CORS_ORIGIN_ALLOW_ALL = True
+# CORS_ALLOW_HEADERS = (
+#     'accept',
+#     'accept-encoding',
+#     'authorization',
+#     'content-type',
+#     'dnt',
+#     'origin',
+#     'user-agent',
+#     'x-csrftoken',
+#     'x-requested-with',
+# )
 
 ROOT_URLCONF = 'mio.urls'
 
@@ -140,7 +159,19 @@ REST_FRAMEWORK = {
         # "rest_framework.authentication.BasicAuthentication",
         # "rest_framework.authentication.SessionAuthentication",
         "account.jwt.JWTAuthentication",
-    ]
+    ],
+    # 'DEFAULT_PARSER_CLASSES': (
+    #     'rest_framework.parsers.FormParser',
+    #     'rest_framework.parsers.MultiPartParser'
+    #  )
 }
+
+EMAIL_BACKEND = env('EMAIL_BACKEND')
+EMAIL_HOST = env('EMAIL_HOST')
+EMAIL_PORT = env('EMAIL_PORT')
+EMAIL_USE_TLS = bool(env('EMAIL_USE_TLS'))
+EMAIL_HOST_USER = env('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
+
 
 settings.configure(DEBUG=True)

@@ -15,7 +15,7 @@ class JWTAuthentication(BaseAuthentication):
         auth_token = auth_data.split(" ")
 
         if len(auth_token) != 2:
-            raise AuthenticationFailed('Token is invalid')
+            raise AuthenticationFailed('Authorization token is invalid')
 
         token = auth_token[1]
 

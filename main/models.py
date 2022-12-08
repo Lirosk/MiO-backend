@@ -66,7 +66,7 @@ class MyUser(AbstractBaseUser, PermissionsMixin, TrackingModel):
         max_length=150,
         blank=True,
         null=True,
-        unique=True,
+        unique=False,
         help_text=_(
             "Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only."
         ),
@@ -93,7 +93,7 @@ class MyUser(AbstractBaseUser, PermissionsMixin, TrackingModel):
     date_joined = models.DateTimeField(_("date joined"), default=timezone.now)
     email_verified = models.BooleanField(
         _("email_verified"),
-        default=True,
+        default=False,
         help_text=_(
             "Designates whether this users email should is verified."
         ),
@@ -113,7 +113,7 @@ class MyUser(AbstractBaseUser, PermissionsMixin, TrackingModel):
                 'exp': (datetime.utcnow() + timedelta(hours=24))
             },
             settings.SECRET_KEY,
-            algorithms='HS256'
+            algorithm='HS256'
         )
 
         return token
