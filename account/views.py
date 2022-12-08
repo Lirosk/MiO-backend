@@ -89,5 +89,4 @@ class VerifyEmailView(GenericAPIView):
                 send_account_verification_email(user, request, "account/verify-email/")
             return Response({'message': "Token expired."}, status=status.HTTP_400_BAD_REQUEST)
         except jwt.exceptions.DecodeError as e:
-            # send_account_verification_email(request.user, request, 'account/verify-email/')
             return Response({'message': 'Token is invalid'}, status=status.HTTP_400_BAD_REQUEST)
