@@ -82,6 +82,8 @@ class VerifyEmailView(GenericAPIView):
             if not user.email_verified:
                 user.email_verified = True
                 user.save()
+            
+            # TODO: Redirect
             return Response({'message': 'Email successfully verified.'}, status=status.HTTP_200_OK)
         except jwt.exceptions.ExpiredSignatureError as e:
             user = User.objects.get(email=email)
