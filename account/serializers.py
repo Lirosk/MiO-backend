@@ -32,3 +32,11 @@ class UserLoginSerializer(serializers.ModelSerializer):
             }
         }
         read_only_fields = ['token']
+
+
+class EmailVerificationSerializer(serializers.ModelSerializer):
+    token = serializers.CharField()
+
+    class Meta:
+        model=User
+        fields = ['token'] 

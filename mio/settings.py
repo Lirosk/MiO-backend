@@ -46,7 +46,7 @@ INSTALLED_APPS = [
     'main',
     'account',
     'rest_framework',
-    # 'verify_email.apps.VerifyEmailConfig',
+    'drf_yasg',
 ]
 
 MIDDLEWARE = [
@@ -57,25 +57,12 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'main.middlewares.my_middleware'
+    'main.middlewares.my_middleware',
+    'corsheaders.middleware.CorsMiddleware',
 ]
 
-# CORS_ALLOWED_ORIGINS = [
-#     '25.13.214.75'
-# ]
 
 CORS_ORIGIN_ALLOW_ALL = True
-# CORS_ALLOW_HEADERS = (
-#     'accept',
-#     'accept-encoding',
-#     'authorization',
-#     'content-type',
-#     'dnt',
-#     'origin',
-#     'user-agent',
-#     'x-csrftoken',
-#     'x-requested-with',
-# )
 
 ROOT_URLCONF = 'mio.urls'
 
