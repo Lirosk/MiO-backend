@@ -8,4 +8,7 @@ urlpatterns = [
     path('register/', views.RegisterAPIView.as_view(), name='register'),
     path('user/', views.AuthUserAPIView.as_view(), name='user'),
     path('verify-email/', views.VerifyEmailView.as_view(), name='verify-email'),
+    path('password-reset/', views.PasswordResetView.as_view(), name="password-reset"),
+    path('password-reset/<uidb64>/<token>/', views.PasswordTokenCheckView.as_view(), name="password-reset-confirmation"),
+    path('password-reset/set-new/', views.SetNewPasswordView.as_view(), name="set-new-password"),
 ]

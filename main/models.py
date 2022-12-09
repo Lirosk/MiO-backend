@@ -122,7 +122,7 @@ class MyUser(AbstractBaseUser, PermissionsMixin, TrackingModel):
     def email_verification_token(self):
         token = jwt.encode({
                 'email': self.email,
-                'user_id': self.pk,
+                'user_id': self.id,
                 "exp": (datetime.utcnow() + timedelta(hours=1))
             },
             settings.SECRET_KEY,
