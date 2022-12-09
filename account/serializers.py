@@ -27,16 +27,13 @@ class UserRegisterSerializer(serializers.ModelSerializer):
 
 
 class UserLoginSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField()
+    password = serializers.CharField(write_only=True)
+    token = serializers.CharField(read_only=True)
+
     class Meta:
         model = User
         fields = ('email', 'password', 'token', )
-        extra_kwargs = {
-            'password': {
-                'write_only': True,
-                'min_length': 8, 'max_length': 128
-            }
-        }
-        read_only_fields = ['token']
 
     def validate(self, attrs):
         email = attrs.get('email', '')
@@ -51,7 +48,11 @@ class UserLoginSerializer(serializers.ModelSerializer):
         if not user.email_verified:
             raise AuthenticationFailed('Email is not verified.')
 
-        return super().validate(attrs)
+        # return {
+        #     "email": user.email,
+        #     "token": user.token
+        # }
+        return super().validate(user)
 
 
 class EmailVerificationSerializer(serializers.Serializer):

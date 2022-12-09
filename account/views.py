@@ -18,18 +18,17 @@ from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 
 User = get_user_model()
 
-class AuthUserAPIView(GenericAPIView):
-    permission_classes = (IsAuthenticated, )
-    serializer_class = serializers.UserRegisterSerializer
+# class AuthUserAPIView(GenericAPIView):
+#     permission_classes = (IsAuthenticated, )
+#     serializer_class = serializers.User
 
-    def get(self, request):
-        user = request.user
-        serializer = self.serializer_class(user)
-        return Response({'user': serializer.data})
+#     def get(self, request):
+#         user = request.user
+#         serializer = self.serializer_class(user)
+#         return Response({'user': serializer.data})
 
 
-class RegisterAPIView(CreateAPIView):
-    model = get_user_model()
+class UserRegisterAPIView(CreateAPIView):
     serializer_class = serializers.UserRegisterSerializer
     permission_classes = (AllowAny, )
     authentication_classes = []
@@ -39,11 +38,10 @@ class RegisterAPIView(CreateAPIView):
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
         emails.send_account_verification_email(user, request, 'account/verify-email/')
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response({'message': 'User has been registered, check email for verification.', **serializer.data}, status=status.HTTP_201_CREATED)
 
 
-class LoginAPIView(GenericAPIView):
-    model = get_user_model()
+class UserLoginAPIView(GenericAPIView):
     serializer_class = serializers.UserLoginSerializer
     permission_classes = (AllowAny, )
     authentication_classes = []
@@ -54,7 +52,8 @@ class LoginAPIView(GenericAPIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class VerifyEmailView(GenericAPIView):
+
+class EmailVerificationAPIView(GenericAPIView):
     serializer_class = serializers.EmailVerificationSerializer
     permission_classes = (AllowAny, )
     authentication_classes = []
@@ -83,7 +82,7 @@ class VerifyEmailView(GenericAPIView):
             return Response({'message': 'Verify email token is invalid.'}, status=status.HTTP_400_BAD_REQUEST)
 
 
-class PasswordResetView(GenericAPIView):
+class PasswordResetAPIView(GenericAPIView):
     serializer_class = serializers.PasswordResetSerializer
     permission_classes = [AllowAny]
     authentication_classes = []
@@ -104,7 +103,7 @@ class PasswordResetView(GenericAPIView):
         return Response({'message': 'Link has been sent to your mail.'}, status=status.HTTP_200_OK)
 
 
-class PasswordTokenCheckView(GenericAPIView):
+class PasswordTokenCheckAPIView(GenericAPIView):
     serializer_class = serializers.PasswordResetSerializer
     permission_classes = [AllowAny]
     authentication_classes = []
@@ -128,7 +127,7 @@ class PasswordTokenCheckView(GenericAPIView):
         return Response({'message': 'Password reset credentials are invalid.'}, status=status.HTTP_401_UNAUTHORIZED)
     
 
-class SetNewPasswordView(GenericAPIView):
+class SetNewPasswordAPIView(GenericAPIView):
     serializer_class = serializers.SetNewPasswordSerializer
     permission_classes = [AllowAny]
     authentication_classes = []
