@@ -7,6 +7,6 @@ urlpatterns = [
     path('register/', views.UserRegisterAPIView.as_view(), name='register'),
     path('verify-email/', views.EmailVerificationAPIView.as_view(), name='verify-email'),
     path('password-reset/', views.PasswordResetAPIView.as_view(), name="password-reset"),
-    path('password-reset/<uidb64>/<token>/', views.PasswordTokenCheckAPIView.as_view(), name="password-reset-confirmation"),
+    # path('password-reset/<uidb64>/<token>/', views.PasswordTokenCheckAPIView.as_view(), name="password-reset-confirmation"),
     path('password-reset/set-new/', views.SetNewPasswordAPIView.as_view(), name="set-new-password"),
 ]

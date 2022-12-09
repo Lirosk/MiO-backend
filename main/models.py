@@ -98,6 +98,14 @@ class MyUser(AbstractBaseUser, PermissionsMixin, TrackingModel):
             "Designates whether this users email should is verified."
         ),
     )
+    redirect_to = models.CharField(
+        _("redirect_to"),
+        max_length=126,
+        default="",
+        help_text=_(
+            "Url redirect to after email verification and password reset."
+        ),
+    )
 
     objects = MyUserManager()
 

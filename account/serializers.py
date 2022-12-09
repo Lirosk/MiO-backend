@@ -3,16 +3,18 @@ from django.contrib.auth import get_user_model, authenticate
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.serializers import ValidationError
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
-from django.utils.encoding import smart_str, force_str, smart_bytes, DjangoUnicodeDecodeError
-from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
+from django.utils.encoding import force_str
+from django.utils.http import urlsafe_base64_decode
 
 
 User = get_user_model()
 
 class UserRegisterSerializer(serializers.ModelSerializer):
+    redirect_to = serializers.CharField(write_only=True)
+
     class Meta:
         model = User
-        fields = ('email', 'password', )
+        fields = ('email', 'password', 'redirect_to')
         extra_kwargs = {
             'password': {
                 'write_only': True,
@@ -64,12 +66,18 @@ class EmailVerificationSerializer(serializers.Serializer):
 
 class PasswordResetSerializer(serializers.Serializer):
     email = serializers.EmailField()
+    # redirect_to = serializers.CharField(write_only=True)
 
     class Meta:
+        # fields = ['email', 'redirect_to']
         fields = ['email']
 
     def validate(self, attrs):
-        email = attrs.get('email', '')
+        email = attrs.get('email')
+        # redirect_to = attrs.get('redirect_to')
+
+        # utils.RedirectsForEmails.set_redirect_url(email, redirect_to)
+
         try:
             user = User.objects.get(email=email)
             if not user.email_verified:
