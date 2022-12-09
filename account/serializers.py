@@ -1,8 +1,9 @@
 from rest_framework import serializers
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, authenticate
+from rest_framework.exceptions import AuthenticationFailed
+
 
 User = get_user_model()
-
 
 class UserRegisterSerializer(serializers.ModelSerializer):
     class Meta:
@@ -20,6 +21,12 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         user = User.objects.create_user(**validated_data)
         return user
 
+    def validate(self, attrs):
+        email = attrs.get('email', '')
+        password = attrs.get('password', '')
+
+        return super().validate(attrs)
+
 
 class UserLoginSerializer(serializers.ModelSerializer):
     class Meta:
@@ -32,6 +39,21 @@ class UserLoginSerializer(serializers.ModelSerializer):
             }
         }
         read_only_fields = ['token']
+
+    def validate(self, attrs):
+        email = attrs.get('email', '')
+        password = attrs.get('password', '')
+
+        user = authenticate(email=email, password=password) 
+
+        if not user:
+            raise AuthenticationFailed('Invalid credentials.')
+        if not user.is_active:
+            raise AuthenticationFailed('Account is disabled.')
+        if not user.email_verified:
+            raise AuthenticationFailed('Email is not verified.')
+
+        return super().validate(attrs)
 
 
 class EmailVerificationSerializer(serializers.ModelSerializer):

@@ -118,6 +118,19 @@ class MyUser(AbstractBaseUser, PermissionsMixin, TrackingModel):
 
         return token
 
+    @property
+    def email_verification_token(self):
+        token = jwt.encode({
+                'email': self.email,
+                'user_id': self.pk,
+                "exp": (datetime.utcnow() + timedelta(hours=1))
+            },
+            settings.SECRET_KEY,
+            algorithm='HS256'
+        )
+
+        return token
+
 
 class CalendarEvent(models.Model):
     ...

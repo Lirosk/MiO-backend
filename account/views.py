@@ -34,20 +34,10 @@ class RegisterAPIView(CreateAPIView):
 
     def post(self, request: Request):
         serializer = self.serializer_class(data=request.data)
-
-        if (serializer.is_valid()):
-            serializer.save()
-            user = User.objects.get(email=serializer.validated_data['email'])
-            try:
-                send_account_verification_email(
-                    user, request, 'account/verify-email/')
-            except Exception as e:
-                user.delete()
-                return Response({'message': 'Error during sending email, check your email'}, status=status.HTTP_400_BAD_REQUEST)
-
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        send_account_verification_email(user, request, 'account/verify-email/')
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 class LoginAPIView(GenericAPIView):
@@ -57,20 +47,9 @@ class LoginAPIView(GenericAPIView):
     authentication_classes = []
 
     def post(self, request: Request):
-        print(f'{request.content_type = }')
-        print(f'{request.data = }')
-        print(f'{request.POST = }')
-
-        email = request.data.get('email')
-        password = request.data.get('password')
-
-        user = authenticate(email=email, password=password)
-
-        if user:
-            serializer = self.serializer_class(user)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-
-        return Response({'message': 'Invalid credentials.'}, status=status.HTTP_401_UNAUTHORIZED)
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class VerifyEmailView(views.APIView):
