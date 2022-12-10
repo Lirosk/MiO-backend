@@ -70,13 +70,15 @@ class EmailVerificationAPIView(GenericAPIView):
             return HttpResponseRedirect(f"{user.redirect_to}?token={user.token}")
             return Response({'message': 'Email successfully verified.'}, status=status.HTTP_200_OK)
         except jwt.exceptions.ExpiredSignatureError as e:
-            user = User.objects.get(email=email)
-            if user:
-                emails.end_account_verification_email(
-                    user, request, "account/verify-email/")
+            try:
+                user = User.objects.get(email=email)
+                emails.end_account_verification_email(user, request, "account/verify-email/")
+            except User.DoesNotExist: ...
             return Response({'message': "Verify email token expired."}, status=status.HTTP_400_BAD_REQUEST)
         except jwt.exceptions.DecodeError as e:
             return Response({'message': 'Verify email token is invalid.'}, status=status.HTTP_400_BAD_REQUEST)
+        except User.DoesNotExist as e:
+            return Response({"message": 'User does not exists'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class PasswordResetAPIView(GenericAPIView):
