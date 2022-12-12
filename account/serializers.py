@@ -66,22 +66,23 @@ class EmailVerificationSerializer(serializers.Serializer):
 
 class PasswordResetSerializer(serializers.Serializer):
     email = serializers.EmailField()
-    # redirect_to = serializers.CharField(write_only=True)
+    redirect_to = serializers.CharField(write_only=True)
 
     class Meta:
-        # fields = ['email', 'redirect_to']
-        fields = ['email']
+        fields = ['email', 'redirect_to']
+        # fields = ['email']
 
     def validate(self, attrs):
         email = attrs.get('email')
-        # redirect_to = attrs.get('redirect_to')
-
-        # utils.RedirectsForEmails.set_redirect_url(email, redirect_to)
+        redirect_to = attrs.get('redirect_to')
 
         try:
             user = User.objects.get(email=email)
             if not user.email_verified:
                 raise ValidationError('Email is not validated.')
+
+            user.redirect_to = redirect_to
+            user.save()
         except User.DoesNotExist as e:
             raise ValidationError('User with given email does not exists.')
 

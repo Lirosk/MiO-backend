@@ -18,10 +18,8 @@ def send_account_verification_email(user, request, relative_link):
     if sent_count == 0:
         raise Exception('Email isn\'t sent.')
     
-def send_password_reset_email(user, request, relative_link):
-    current_site = get_current_site(request).domain
-
-    abs_url = f"http://{current_site}/{relative_link}"
+def send_password_reset_email(user, uidb64, token):
+    abs_url = f"{user.redirect_to}?uidb64={uidb64}&token={token}"
 
     subject = "MiO Password Reset"
     message = f"To reset your password, please use the link below:\n{abs_url}"

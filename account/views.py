@@ -94,8 +94,7 @@ class PasswordResetAPIView(GenericAPIView):
             user = User.objects.get(email=serializer.validated_data['email'])
             uidb64 = urlsafe_base64_encode(smart_bytes(user.id))
             token = PasswordResetTokenGenerator().make_token(user)
-            relative_link = f"account/password-reset/{uidb64}/{token}"
-            emails.send_password_reset_email(user, request, relative_link)
+            emails.send_password_reset_email(user, uidb64, token)
         except User.DoesNotExist as e:
             return Response({'message': 'User with such email does not exist.'}, status=status.HTTP_400_BAD_REQUEST)
 
