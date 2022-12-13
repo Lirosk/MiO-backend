@@ -1,3 +1,164 @@
 from django.db import models
+from django.conf import settings
+from utils.models import TrackingModel
+import stripe
+stripe.api_key = settings.STRIPE_SECRET_API_KEY
 
 # Create your models here.
+
+class Product(TrackingModel):
+    stripe_id = models.CharField(
+        primary_key=True,
+        unique=True,
+        max_length=19,
+        null=False,
+    )
+
+    name = models.CharField(
+        max_length=36,
+        null=False
+    )
+
+    description = models.CharField(
+        max_length=128,
+        default=""
+    )
+
+    def copy_fields(self, obj):
+        if self.__class__ != obj.__class__:
+            raise TypeError("Can't copy fields from another type object.")
+
+        self.name = obj.name
+        self.description = obj.description
+
+    @classmethod
+    def get_via_API(cls):
+        products_data = stripe.Product.list(active=True).data
+        products = []
+        for product_data in products_data:
+            if not product_data["name"].startswith("MiO"):
+                continue
+
+            product = cls(
+                name=product_data["name"],
+                description=product_data["description"],
+                stripe_id=product_data["id"]
+            )
+            products.append(product)
+
+        for product in products:
+            try:
+                saved_product = cls.objects.get(stripe_id=product.stripe_id)
+                saved_product.copy_fields(product)
+                saved_product.save()    
+            except cls.DoesNotExist:
+                product.save()
+
+        for product_data in products_data:
+            try:
+                price = Price.objects.get(stripe_id=product_data["default_price"])
+                product = Product.objects.get(stripe_id=product_data["id"])
+
+                if not PriceToProduct.objects.filter(price=price, product=product):
+                    PriceToProduct(price=price, product=product).save()
+            except (Price.DoesNotExist, Product.DoesNotExist):
+                ...
+
+
+class Price(TrackingModel):
+    stripe_id = models.CharField(
+        primary_key=True,
+        unique=True,
+        max_length=30,
+        null=False,
+    )
+
+    per_unit = models.DecimalField(
+        max_digits=6,
+        decimal_places=4,
+        null=False)
+
+    period = models.CharField(
+        max_length=16,
+        null=False
+    )
+
+    currency = models.CharField(
+        max_length=16,
+        null=False
+    )
+
+    def copy_fields(self, obj):
+        if self.__class__ != obj.__class__:
+            raise TypeError("Can't copy fields from another type object.")
+
+        self.per_unit = obj.per_unit
+        self.period = obj.period
+        self.currency = obj.currency
+
+    @classmethod
+    def get_via_API(cls):
+        prices_data = stripe.Price.list().data
+
+        prices = []
+        for price_data in prices_data:
+            try:
+                price = cls(
+                    stripe_id = price_data["id"],
+                    product_id = Product.objects.get(stripe_id=price_data["product"]),
+                    per_unit = price_data["unit_amount"] / 100.,
+                    period = price_data["recurring"]["interval"],
+                    currency = price_data["currency"]
+                )
+
+                prices.append(price)
+            except Product.DoesNotExist:
+                ...
+                
+        for price in prices:
+            try:
+                saved_price = cls.objects.get(stripe_id=price.stripe_id)
+                saved_price.copy_fields(price)
+                saved_price.save()
+            except cls.DoesNotExist:
+                price.save()
+
+
+class Feature(TrackingModel):
+    description = models.CharField(
+        blank=True,
+        max_length=126
+    )
+
+
+class ProductPriceFeature(models.Model):
+    product = models.OneToOneField(to=Product, on_delete=models.CASCADE)
+    price = models.OneToOneField(to=Price, on_delete=models.CASCADE)
+    features = models.ManyToManyField(to=Feature)
+
+# mio_standart = Product.objects.get(stripe_id="prod_MxPEoLynfedPOv")
+# mio_extended = Product.objects.get(stripe_id="prod_MxRBL8v6fMqOS2")
+
+# price_standard = Price.objects.get(stripe_id="price_1MDUQJK2EHCN3Mn1kTJD1e2X")
+# price_extended = Price.objects.get(stripe_id="price_1MDWJFK2EHCN3Mn1V84A7vJc")
+
+# feature_s_1 = Feature.objects.get(id=1)
+# feature_s_2 = Feature.objects.get(id=2)
+# feature_e_1 = Feature.objects.get(id=3)
+# feature_e_2 = Feature.objects.get(id=4)
+# feature_s_11 = Feature.objects.get(id=5)
+# feature_s_22 = Feature.objects.get(id=6)
+
+# r1 = ProductPriceFeature(product=mio_standart, price=price_standard)
+# r1.save()
+# r1.features.add(feature_s_1)
+# r1.features.add(feature_s_2)
+# r1.save()
+
+# r2 = ProductPriceFeature(product=mio_extended, price=price_extended)
+# r2.save()
+# r2.features.add(feature_s_11)
+# r2.features.add(feature_s_22)
+# r2.features.add(feature_e_1)
+# r2.features.add(feature_e_2)
+# r2.save()
