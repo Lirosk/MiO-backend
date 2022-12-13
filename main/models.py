@@ -53,6 +53,12 @@ class MyUserManager(UserManager):
 class MyUser(AbstractBaseUser, PermissionsMixin, TrackingModel):
     username_validator = UnicodeUsernameValidator()
 
+    email = models.EmailField(
+        _("email address"),
+        blank=False,
+        unique=True,
+        primary_key=True,
+    )
     username = models.CharField(
         _("username"),
         max_length=150,
@@ -67,7 +73,6 @@ class MyUser(AbstractBaseUser, PermissionsMixin, TrackingModel):
             "unique": _("A user with that username already exists."),
         },
     )
-    email = models.EmailField(_("email address"), blank=False, unique=True)
     is_staff = models.BooleanField(
         _("staff status"),
         default=False,
