@@ -47,7 +47,8 @@ INSTALLED_APPS = [
     'account',
     'rest_framework',
     'drf_yasg',
-    'subscriptions'
+    'subscriptions',
+    'utils',
 ]
 
 MIDDLEWARE = [
@@ -166,5 +167,17 @@ STRIPE_SECRET_API_KEY = env("STRIPE_SECRET_API_KEY")
 STRIPE_PUBLIC_API_KEY = env("STRIPE_PUBLIC_API_KEY")
 STRIPE_ACCOUNT_ID = env("STRIPE_ACCOUNT_ID")
 
+
+SWAGGER_SETTINGS = {
+    'SECURITY_DEFINITIONS': {
+        'api_key': {
+            'type': 'apiKey',
+            'in': 'header',
+            'name': 'Authorization'
+        }
+    },
+}
+
+STRIPE_PRODUCT_ID=env("STRIPE_PRODUCT_ID")
 
 settings.configure(DEBUG=True)

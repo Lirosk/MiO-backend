@@ -8,6 +8,7 @@ from django.utils.translation import gettext_lazy as _
 import jwt
 from django.conf import settings
 from datetime import datetime, timedelta
+from utils.models import TrackingModel
 
 
 class MyUserManager(UserManager):
@@ -47,15 +48,6 @@ class MyUserManager(UserManager):
             raise ValueError("Superuser must have is_superuser=True.")
 
         return self._create_user(email, password, username=username, **extra_fields)
-
-
-class TrackingModel(models.Model):
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        abstract = True
-        ordering = ('-created_at', )
 
 
 class MyUser(AbstractBaseUser, PermissionsMixin, TrackingModel):
