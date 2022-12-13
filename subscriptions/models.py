@@ -59,8 +59,8 @@ class Product(TrackingModel):
                 price = Price.objects.get(stripe_id=product_data["default_price"])
                 product = Product.objects.get(stripe_id=product_data["id"])
 
-                if not PriceToProduct.objects.filter(price=price, product=product):
-                    PriceToProduct(price=price, product=product).save()
+                if not ProductPriceFeature.objects.filter(price=price, product=product):
+                    ProductPriceFeature(price=price, product=product).save()
             except (Price.DoesNotExist, Product.DoesNotExist):
                 ...
 
@@ -135,30 +135,3 @@ class ProductPriceFeature(models.Model):
     product = models.OneToOneField(to=Product, on_delete=models.CASCADE)
     price = models.OneToOneField(to=Price, on_delete=models.CASCADE)
     features = models.ManyToManyField(to=Feature)
-
-# mio_standart = Product.objects.get(stripe_id="prod_MxPEoLynfedPOv")
-# mio_extended = Product.objects.get(stripe_id="prod_MxRBL8v6fMqOS2")
-
-# price_standard = Price.objects.get(stripe_id="price_1MDUQJK2EHCN3Mn1kTJD1e2X")
-# price_extended = Price.objects.get(stripe_id="price_1MDWJFK2EHCN3Mn1V84A7vJc")
-
-# feature_s_1 = Feature.objects.get(id=1)
-# feature_s_2 = Feature.objects.get(id=2)
-# feature_e_1 = Feature.objects.get(id=3)
-# feature_e_2 = Feature.objects.get(id=4)
-# feature_s_11 = Feature.objects.get(id=5)
-# feature_s_22 = Feature.objects.get(id=6)
-
-# r1 = ProductPriceFeature(product=mio_standart, price=price_standard)
-# r1.save()
-# r1.features.add(feature_s_1)
-# r1.features.add(feature_s_2)
-# r1.save()
-
-# r2 = ProductPriceFeature(product=mio_extended, price=price_extended)
-# r2.save()
-# r2.features.add(feature_s_11)
-# r2.features.add(feature_s_22)
-# r2.features.add(feature_e_1)
-# r2.features.add(feature_e_2)
-# r2.save()
