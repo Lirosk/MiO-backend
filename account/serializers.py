@@ -50,10 +50,6 @@ class UserLoginSerializer(serializers.ModelSerializer):
         if not user.email_verified:
             raise AuthenticationFailed('Email is not verified.')
 
-        # return {
-        #     "email": user.email,
-        #     "token": user.token
-        # }
         return super().validate(user)
 
 
@@ -70,7 +66,6 @@ class PasswordResetSerializer(serializers.Serializer):
 
     class Meta:
         fields = ['email', 'redirect_to']
-        # fields = ['email']
 
     def validate(self, attrs):
         email = attrs.get('email')

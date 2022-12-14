@@ -3,28 +3,46 @@ from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
+from rest_framework.permissions import AllowAny
 from . import models
 from . import serializers
 # Create your views here.
 
 
 class PaymentSessionAPIView(GenericAPIView):
+    serializer_class = serializers.PaymentSessionSerializer
     authentication_classes = []
+    permission_classes = [AllowAny]
+    
 
     def get(self, request):
-        prices = models.stripe.Price.list()
+        serialized = self.serializer_class(request.GET)
 
-        checkout_session = models.stripe.checkout.Session.create(
-            line_items=[{
-                'price': prices.data[1].id,
-                'quantity': 1
-            }],
-            mode='subscription',
-            success_url='http://google.com',
-            cancel_url='http://yandex.com'
-        )
+        try:
+            product = models.Product.objects.get(stripe_id=serialized["product_stripe_id"])
 
-        return HttpResponseRedirect(checkout_session.url)
+            ppf = models.ProductPriceFeature(product=product)
+
+            checkout_session = models.stripe.checkout.Session.create(
+                payment_method_types=["card"],
+                line_items=[{
+                    "price_data": {
+                        "currency": ppf.price.currency,
+                        "unit_amount": ppf.price.per_unit,
+                        "product_data": {
+                            "name": ppf.product.name,
+                        }
+                    },
+                    "quantity": 1,
+                }],
+                mode="subscription",
+                success_url = serialized.data["success_redirect_url"],
+                cancel_url = serialized.data["cancel_redirect_url"],
+            )
+
+            return HttpResponseRedirect(checkout_session.url)
+        except (models.Product.DoesNotExist, models.ProductPriceFeature.DoesNotExist):
+            return Response({"message": "Product with such id does not exists."}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ProductsAPIView(APIView):
