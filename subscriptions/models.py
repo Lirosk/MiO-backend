@@ -150,6 +150,6 @@ class Subscriptions(TrackingModel):
         on_delete=models.CASCADE
     )
 
-    subscription_id = models.CharField(
+    subscription = models.CharField(
         max_length=36
     )
