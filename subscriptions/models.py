@@ -142,7 +142,8 @@ class ProductPriceFeature(models.Model):
 class Subscriptions(TrackingModel):
     user = models.OneToOneField(
         User,
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        primary_key=True
     )
 
     product = models.OneToOneField(
