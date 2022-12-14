@@ -1,4 +1,6 @@
+from django.contrib.auth import authenticate
 from rest_framework import serializers
+from rest_framework.exceptions import AuthenticationFailed
 from . import models
 
 
@@ -21,9 +23,28 @@ class FeatureSerializer(serializers.ModelSerializer):
 
 
 class PaymentSessionSerializer(serializers.Serializer):
-    product_stripe_id = serializers.CharField(write_only=True)
-    success_redirect_url = serializers.CharField(write_only=True)
-    cancel_redirect_url = serializers.CharField(write_only=True)
+    product_stripe_id = serializers.CharField()
+    success_redirect_url = serializers.CharField()
+    cancel_redirect_url = serializers.CharField()
 
     class Meta:
         fields = ["product_stripe_id", "success_redirect_url", "cancel_redirect_url"]
+
+
+class CancelSubscriptionSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    password = serializers.CharField(write_only=True)
+
+    class Meta:
+        fields = ["password"]
+
+    def validate(self, attrs):
+        email = attrs.get("email", "")
+        password = attrs.get("password", "")
+
+        user = authenticate(email=email, password=password)
+
+        if not user:
+            raise AuthenticationFailed("Invalid credentials.")
+
+        return super().validate(attrs)
