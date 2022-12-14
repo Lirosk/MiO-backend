@@ -5,7 +5,7 @@ from utils.models import TrackingModel
 import stripe
 stripe.api_key = settings.STRIPE_SECRET_API_KEY
 
-User = get_user_model
+User = get_user_model()
 
 # Create your models here.
 
@@ -140,12 +140,12 @@ class ProductPriceFeature(models.Model):
 
 
 class Subscriptions(TrackingModel):
-    user = models.ForeignKey(
+    user = models.OneToOneField(
         User,
         on_delete=models.CASCADE
     )
 
-    product = models.ForeignKey(
+    product = models.OneToOneField(
         Product,
         on_delete=models.CASCADE
     )

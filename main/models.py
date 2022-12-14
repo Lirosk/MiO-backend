@@ -9,7 +9,6 @@ import jwt
 from django.conf import settings
 from datetime import datetime, timedelta
 from utils.models import TrackingModel
-from subscriptions.models import Product
 
 
 class MyUserManager(UserManager):
