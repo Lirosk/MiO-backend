@@ -69,7 +69,7 @@ class Product(TrackingModel):
                 ...
 
 
-class Price(TrackingModel):
+class Price(models.Model):
     stripe_id = models.CharField(
         primary_key=True,
         unique=True,
@@ -127,7 +127,7 @@ class Price(TrackingModel):
                 price.save()
 
 
-class Feature(TrackingModel):
+class Feature(models.Model):
     description = models.CharField(
         blank=True,
         max_length=126
