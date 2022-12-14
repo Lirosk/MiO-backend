@@ -55,9 +55,10 @@ class UserLoginSerializer(serializers.ModelSerializer):
 
 class EmailVerificationSerializer(serializers.Serializer):
     token = serializers.CharField()
+    email = serializers.EmailField()
 
     class Meta:
-        fields = ['token']
+        fields = ["token", "email"]
 
 
 class PasswordResetSerializer(serializers.Serializer):

@@ -56,8 +56,10 @@ class EmailVerificationAPIView(GenericAPIView):
 
     @swagger_auto_schema(manual_parameters=[token_param_config])
     def get(self, request):
-        token = request.GET.get('token')
-        email = request.GET.get('email')
+        serialized = self.serializer_class(request.GET)
+
+        token = serialized.data.get('token')
+        email = serialized.data.get('email')
         try:
             payload = jwt.decode(
                 token, settings.SECRET_KEY, algorithms='HS256')
