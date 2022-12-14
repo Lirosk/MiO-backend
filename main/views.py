@@ -1,16 +1,28 @@
-from django.shortcuts import render
-from django.http import HttpResponse
+from rest_framework import status
+from rest_framework.views import APIView
+from rest_framework.generics import GenericAPIView
+from rest_framework.response import Response
+from . import serializers
+from . import models
+
 
 # Create your views here.
 
+class KanbanAPIView(GenericAPIView):
+    serializer_class = serializers.KanbanSerializer
 
-def home(request):
-    return HttpResponse('pashol nahui')
+    def get(self, request):
+        events = models.KanbanEvent.objects.filter(user=request.user)
+        serialized = self.serializer_class(events, many=True)
+        return Response(serialized.data, status=status.HTTP_200_OK)
 
 
-def user(request):
-    return HttpResponse('user')
+    def put(self, request):
+        ...
 
+    def patch(self, request):
+        ...
 
-def social(request):
-    return HttpResponse('social')
+    def delete(self, request):
+        ...
+

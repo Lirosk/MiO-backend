@@ -1,6 +1,7 @@
 from django.utils import timezone
 from django.apps import apps
 from django.db import models
+from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, UserManager
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.contrib.auth.hashers import make_password
@@ -127,7 +128,6 @@ class MyUser(AbstractBaseUser, PermissionsMixin, TrackingModel):
     def email_verification_token(self):
         token = jwt.encode({
                 'email': self.email,
-                'user_id': self.id,
                 "exp": (datetime.utcnow() + timedelta(hours=1))
             },
             settings.SECRET_KEY,
@@ -141,12 +141,23 @@ class CalendarEvent(models.Model):
     ...
 
 
-class KanbanCategories(models.Model):
-    ...
+class KanbanCategory(models.Model):
+    name = models.CharField(
+        max_length=32,
+        primary_key=True,
+    )
 
 
-class KanbanEvent(models.Model):
-    ...
+class KanbanEvent(TrackingModel):
+    user = models.ForeignKey(
+        MyUser,
+        on_delete=models.CASCADE,
+    )
+    category = models.ForeignKey(
+        KanbanCategory,
+        on_delete=models.CASCADE,
+    )
+    description = models.TextField()
 
 
 class SocialNetwork(models.Model):

@@ -63,14 +63,12 @@ class EmailVerificationAPIView(GenericAPIView):
         try:
             payload = jwt.decode(
                 token, settings.SECRET_KEY, algorithms='HS256')
-            user = User.objects.get(id=payload['user_id'])
+            user = User.objects.get(email=payload['email'])
             if not user.email_verified:
                 user.email_verified = True
                 user.save()
 
-            # TODO: Redirect
             return HttpResponseRedirect(f"{user.redirect_to}?token={user.token}")
-            return Response({'message': 'Email successfully verified.'}, status=status.HTTP_200_OK)
         except jwt.exceptions.ExpiredSignatureError as e:
             try:
                 user = User.objects.get(email=email)
