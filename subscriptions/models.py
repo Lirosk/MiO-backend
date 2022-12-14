@@ -73,10 +73,9 @@ class Price(TrackingModel):
         null=False,
     )
 
-    per_unit = models.DecimalField(
-        max_digits=6,
-        decimal_places=4,
-        null=False)
+    per_unit = models.IntegerField(
+        null=False
+    )
 
     period = models.CharField(
         max_length=16,
