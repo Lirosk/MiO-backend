@@ -9,6 +9,7 @@ import jwt
 from django.conf import settings
 from datetime import datetime, timedelta
 from utils.models import TrackingModel
+from subscriptions.models import Product
 
 
 class MyUserManager(UserManager):
@@ -53,6 +54,11 @@ class MyUserManager(UserManager):
 class MyUser(AbstractBaseUser, PermissionsMixin, TrackingModel):
     username_validator = UnicodeUsernameValidator()
 
+    subscription = models.ForeignKey(
+        Product,
+        null=True,
+        on_delete=models.DO_NOTHING
+    )
     email = models.EmailField(
         _("email address"),
         blank=False,
