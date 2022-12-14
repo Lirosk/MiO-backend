@@ -144,7 +144,6 @@ class CancelSubscriptionAPIView(GenericAPIView):
 
         try:
             subscription = models.Subscriptions.objects.get(user=user)
-            models.stripe.Subscription.delete(subscription.subscription)
             subscription.delete()
         except models.Subscriptions.DoesNotExist:
             ...

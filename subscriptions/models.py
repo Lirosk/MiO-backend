@@ -1,3 +1,4 @@
+from typing import Tuple, Dict, Any
 from django.db import models
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -154,3 +155,7 @@ class Subscriptions(TrackingModel):
     subscription = models.CharField(
         max_length=36
     )
+
+    def delete(self, using: Any = ..., keep_parents: bool = ...) -> Tuple[int, Dict[str, int]]:
+        stripe.Subscription.delete(self.subscription)
+        return super().delete(using, keep_parents)
