@@ -1,8 +1,11 @@
 from django.db import models
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from utils.models import TrackingModel
 import stripe
 stripe.api_key = settings.STRIPE_SECRET_API_KEY
+
+User = get_user_model
 
 # Create your models here.
 
@@ -134,3 +137,19 @@ class ProductPriceFeature(models.Model):
     product = models.OneToOneField(to=Product, on_delete=models.CASCADE)
     price = models.OneToOneField(to=Price, on_delete=models.CASCADE)
     features = models.ManyToManyField(to=Feature)
+
+
+class Subscriptions(TrackingModel):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE
+    )
+
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE
+    )
+
+    subscription_id = models.CharField(
+        max_length=36
+    )
