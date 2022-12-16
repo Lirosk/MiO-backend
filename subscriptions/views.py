@@ -59,6 +59,9 @@ class PaymentSessionAPIView(GenericAPIView):
 
 
 class ProductsAPIView(APIView):
+    authentication_classes = []
+    permission_classes = [AllowAny]
+    
     def get(self, request):
         if models.Product.objects.count() == 0:
             models.Product.get_via_API()
