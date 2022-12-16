@@ -9,7 +9,7 @@ import jwt
 from django.conf import settings
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
-
+from . import models
 from . import emails, serializers
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.utils.encoding import smart_str, force_str, smart_bytes, DjangoUnicodeDecodeError
@@ -29,8 +29,11 @@ class UserRegisterAPIView(CreateAPIView):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
-        user.redirect_to = serializer.validated_data['redirect_to']
-        user.save()
+
+        after_email_verification = serializer.validated_data['redirect_to']
+        redirect = models.Redirect(user=user, after_email_verification=after_email_verification)
+        redirect.save()
+
         emails.send_account_verification_email(
             user, request, 'account/verify-email/')
         return Response({'message': 'User has been registered, check email for verification.', **serializer.data}, status=status.HTTP_201_CREATED)
@@ -69,7 +72,8 @@ class EmailVerificationAPIView(GenericAPIView):
                 user.email_verified = True
                 user.save()
 
-            return HttpResponseRedirect(f"{user.redirect_to}?token={user.token}")
+            redirect = models.Redirect.objects.get(user=user)
+            return HttpResponseRedirect(f"{redirect.after_email_verification}?token={user.token}")
         except jwt.exceptions.ExpiredSignatureError as e:
             try:
                 user = User.objects.get(email=email)
