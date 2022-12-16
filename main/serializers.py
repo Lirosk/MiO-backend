@@ -44,12 +44,25 @@ class PutKanbanSerializer(serializers.ModelSerializer):
 class DeleteKanbanSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.KanbanEvent
-        fields = ["id"]
+        fields = ["id", "user"]
         extra_kwargs = {
             "id": {
                 "read_only": False
             },
+            "user": {
+                "write_only": True
+            }
         }
+
+    def validate(self, attrs):
+        id = attrs.get("id", "")
+        user = attrs.get("user", None)
+
+        existing = models.KanbanEvent.objects.filter(id=id, user=user)
+        if not existing.exists():
+            raise serializers.ValidationError("Kanban event doesn't exists.")
+
+        return super().validate(attrs)
 
 
 class KanbanCategorySerializer(serializers.ModelSerializer):
@@ -99,3 +112,13 @@ class DeleteCalendarEventSerializer(serializers.ModelSerializer):
                 "write_only": True
             }
         }
+
+    def validate(self, attrs):
+        id = attrs.get("id", "")
+        user = attrs.get("user", None)
+
+        existing = models.CalendarEvent.objects.filter(id=id, user=user)
+        if not existing.exists():
+            raise serializers.ValidationError("Calendar event doesn't exists.")
+
+        return super().validate(attrs)

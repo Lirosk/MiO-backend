@@ -157,7 +157,6 @@ class CalendarEvent(TrackingModel):
     end_timezone = models.CharField(max_length=126, null=True)
 
 
-
 class KanbanCategory(models.Model):
     name = models.CharField(
         max_length=32,
