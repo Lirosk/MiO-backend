@@ -96,14 +96,6 @@ class MyUser(AbstractBaseUser, PermissionsMixin, TrackingModel):
             "Designates whether this users email should is verified."
         ),
     )
-    redirect_to = models.CharField(
-        _("redirect_to"),
-        max_length=126,
-        default="",
-        help_text=_(
-            "Url redirect to after email verification and password reset."
-        ),
-    )
 
     objects = MyUserManager()
 
@@ -150,7 +142,7 @@ class CalendarEvent(TrackingModel):
     following_id = models.CharField(max_length=126, null=True)
     guid = models.CharField(max_length=126, null=True)
     location = models.CharField(max_length=126,null=True)
-    recurrence_exception = models.CharField(max_length=64,null=True)
+    recurrence_exception = models.CharField(max_length=128,null=True)
     recurrence_id = models.IntegerField(null=True)
     recurrence_rule = models.CharField(max_length=126,null=True)
     start_timezone = models.CharField(max_length=126,null=True)

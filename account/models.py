@@ -6,9 +6,10 @@ User = get_user_model()
 
 # Create your models here.
 class Redirect(models.Model):
-    user = models.ForeignKey(
+    user = models.OneToOneField(
         User,
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        primary_key=True,
     )
 
-    after_password_reset = models.TextField()
+    after_email_verification = models.TextField()
