@@ -117,7 +117,7 @@ class CalendarAPIView(APIView):
     
     def put(self, request):
         add_user_to_request_data_list_items(request)
-        serialized = serializers.PutCalendarEventSerializer(request.data, many=True)
+        serialized = serializers.PutCalendarEventSerializer(data=request.data, many=True)
         serialized.is_valid(raise_exception=True)
         serialized.save()
         return Response(serialized.data, status=status.HTTP_200_OK)

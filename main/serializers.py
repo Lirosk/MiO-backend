@@ -17,7 +17,8 @@ class KanbanSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         id = attrs.get("id", 0)
-        existing = models.KanbanEvent.objects.filter(id=id)
+        user = attrs.get("user", None)
+        existing = models.KanbanEvent.objects.filter(id=id, user=user)
         if not existing.exists():
             raise serializers.ValidationError("Kanban event with given id doesn't exists.", 400)
 
@@ -72,7 +73,8 @@ class CalendarEventSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         id = attrs.get("id", 0)
-        existing = models.CalendarEvent.objects.filter(id=id)
+        user = attrs.get("user", None)
+        existing = models.CalendarEvent.objects.filter(id=id, user=user)
         if not existing.exists():
             raise serializers.ValidationError("Calendar event with given id doesn't exists.", 400)
 
