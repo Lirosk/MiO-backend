@@ -9,6 +9,13 @@ from drf_yasg import openapi
 
 # Create your views here.
 
+def add_user_to_request_data_list_items( request):
+    try:
+        for data in request.data:
+            data["user"] = request.user.email
+    except TypeError:
+        return Response({"message": "Invalid data format."}, status=status.HTTP_400_BAD_REQUEST)
+
 
 class KanbanAPIView(APIView):
     id = openapi.Parameter("id", in_=openapi.IN_BODY,
@@ -21,7 +28,7 @@ class KanbanAPIView(APIView):
     @swagger_auto_schema(manual_parameters=[])
     def get(self, request):
         events = models.KanbanEvent.objects.filter(user=request.user)
-        serialized = serializers.PatchKanbanSerializer(events, many=True)
+        serialized = serializers.KanbanSerializer(events, many=True)
         return Response(serialized.data, status=status.HTTP_200_OK)
 
     @swagger_auto_schema(
@@ -37,7 +44,7 @@ class KanbanAPIView(APIView):
         ),
     )
     def put(self, request):
-        self.add_user_to_request(request)
+        add_user_to_request_data_list_items(request)
         serialized = serializers.PutKanbanSerializer(
             data=request.data, many=True)
         serialized.is_valid(raise_exception=True)
@@ -58,8 +65,8 @@ class KanbanAPIView(APIView):
         ),
     )
     def patch(self, request):
-        self.add_user_to_request(request)
-        serialized = serializers.PatchKanbanSerializer(data=request.data, many=True)
+        add_user_to_request_data_list_items(request)
+        serialized = serializers.KanbanSerializer(data=request.data, many=True)
         serialized.is_valid(raise_exception=True)
         for obj in serialized.validated_data:
             event = models.KanbanEvent.objects.get(id=obj["id"])
@@ -81,7 +88,7 @@ class KanbanAPIView(APIView):
         ),
     )
     def delete(self, request):
-        self.add_user_to_request(request)
+        add_user_to_request_data_list_items(request)
         serialized = serializers.DeleteKanbanSerializer(data=request.data, many=True)
         serialized.is_valid(raise_exception=True)
         for obj in serialized.validated_data:
@@ -92,13 +99,6 @@ class KanbanAPIView(APIView):
 
         return Response(serialized.data, status=status.HTTP_200_OK)
 
-    def add_user_to_request(self, request):
-        try:
-            for data in request.data:
-                data["user"] = request.user.email
-        except TypeError:
-            return Response({"message": "Invalid data format."}, status=status.HTTP_400_BAD_REQUEST)
-
 
 class KanbanCategoriesAPIView(GenericAPIView):
     serializer_class = serializers.KanbanCategorySerializer
@@ -106,4 +106,41 @@ class KanbanCategoriesAPIView(GenericAPIView):
     def get(self, request):
         categories = models.KanbanCategory.objects.all()
         serialized = self.serializer_class(categories, many=True)
+        return Response(serialized.data, status=status.HTTP_200_OK)
+
+
+class CalendarAPIView(APIView):
+    def get(self, request):
+        events = models.CalendarEvent.objects.filter(user=request.user)
+        serialized = serializers.CalendarEventSerializer(events, many=True)
+        return Response(serialized.data, status=status.HTTP_200_OK)
+    
+    def put(self, request):
+        add_user_to_request_data_list_items(request)
+        serialized = serializers.PutCalendarEventSerializer(request.data, many=True)
+        serialized.is_valid(raise_exception=True)
+        serialized.save()
+        return Response(serialized.data, status=status.HTTP_200_OK)
+
+    def patch(self, request):
+        add_user_to_request_data_list_items(request)
+        serialized = serializers.CalendarEventSerializer(data=request.data, many=True)
+        serialized.is_valid(raise_exception=True)
+        for obj in serialized.validated_data:
+            event = models.CalendarEvent.objects.get(id=obj["id"])
+            event_serialized = serializers.CalendarEventSerializer(data=event)
+            event_serialized.update(event, obj)
+
+        return Response(serialized.data, status=status.HTTP_200_OK)
+
+    def delete(self, request):
+        add_user_to_request_data_list_items(request)
+        serialized = serializers.DeleteCalendarEventSerializer(data=request.data, many=True)
+        serialized.is_valid(raise_exception=True)
+        for obj in serialized.validated_data:
+            existing = models.CalendarEvent.objects.filter(**obj, user=request.user)
+            if not existing.exists():
+                return Response({"message": "Calendar event with given id doesn't exists"}, status=status.HTTP_400_BAD_REQUEST)
+            existing.first().delete()
+
         return Response(serialized.data, status=status.HTTP_200_OK)

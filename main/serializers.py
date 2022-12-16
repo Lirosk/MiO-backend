@@ -5,16 +5,13 @@ from . import models
 class KanbanSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.KanbanEvent
-        fields = ["id", "category", "description"]
-
-
-class PatchKanbanSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.KanbanEvent
-        fields = ["id", "category", "description", "user"]
+        exclude = ["created_at", "updated_at"]
         extra_kwargs = {
             "id": {
                 "read_only": False
+            },
+            "user": {
+                "write_only": True
             }
         }
 
@@ -30,7 +27,7 @@ class PatchKanbanSerializer(serializers.ModelSerializer):
 class PutKanbanSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.KanbanEvent
-        fields = ["id", "category", "description", "user"]
+        exclude = ["created_at", "updated_at"]
         extra_kwargs = {
             "user": {
                 "write_only": True
@@ -51,4 +48,52 @@ class DeleteKanbanSerializer(serializers.ModelSerializer):
             "id": {
                 "read_only": False
             },
+        }
+
+
+class KanbanCategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.KanbanCategory
+        fields = '__all__'
+
+
+class CalendarEventSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.CalendarEvent
+        exclude = ["created_at", "updated_at"]
+        extra_kwargs = {
+            "id": {
+                "read_only": False
+            },
+            "user": {
+                "write_only": True
+            }
+        }
+
+    def validate(self, attrs):
+        id = attrs.get("id", 0)
+        existing = models.CalendarEvent.objects.filter(id=id)
+        if not existing.exists():
+            raise serializers.ValidationError("Calendar event with given id doesn't exists.", 400)
+
+        return super().validate(attrs)
+
+
+class PutCalendarEventSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.CalendarEvent
+        exclude = ["created_at", "updated_at"]
+
+
+class DeleteCalendarEventSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.CalendarEvent
+        fields = ["id", "user"]
+        extra_kwargs = {
+            "id": {
+                "read_only": False
+            },
+            "user": {
+                "write_only": True
+            }
         }

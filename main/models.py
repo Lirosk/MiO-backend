@@ -137,8 +137,25 @@ class MyUser(AbstractBaseUser, PermissionsMixin, TrackingModel):
         return token
 
 
-class CalendarEvent(models.Model):
-    ...
+class CalendarEvent(TrackingModel):
+    user = models.ForeignKey(
+        MyUser,
+        on_delete=models.CASCADE
+    )
+    subject = models.CharField(max_length=64)
+    description = models.TextField(null=True)
+    start_time = models.DateTimeField()
+    end_time = models.DateTimeField()
+    is_all_day = models.BooleanField()
+    following_id = models.CharField(max_length=126, null=True)
+    guid = models.CharField(max_length=126, null=True)
+    location = models.CharField(max_length=126,null=True)
+    recurrence_exception = models.CharField(max_length=64,null=True)
+    recurrence_id = models.IntegerField(null=True)
+    recurrence_rule = models.CharField(max_length=126,null=True)
+    start_timezone = models.CharField(max_length=126,null=True)
+    end_timezone = models.CharField(max_length=126, null=True)
+
 
 
 class KanbanCategory(models.Model):
