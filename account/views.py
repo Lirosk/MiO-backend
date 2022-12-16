@@ -9,6 +9,7 @@ import jwt
 from django.conf import settings
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
+
 from . import emails, serializers
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.utils.encoding import smart_str, force_str, smart_bytes, DjangoUnicodeDecodeError
@@ -134,3 +135,27 @@ class SetNewPasswordAPIView(GenericAPIView):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         return Response({'message': 'Password reset success'}, status=status.HTTP_200_OK)
+
+
+class PasswordResetInPlaceAPIView(GenericAPIView):
+    serializer_class = serializers.PasswordResetInPlaceSerializer
+
+    password = openapi.Parameter("password", in_=openapi.IN_BODY, type=openapi.TYPE_STRING)
+    new_password = openapi.Parameter("new_password", in_=openapi.IN_BODY, type=openapi.TYPE_STRING)
+
+    @swagger_auto_schema(request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            "password": password,
+            "new_password": new_password
+        }
+    ))
+    def post(self, request):
+        user = request.user
+        request.data["email"] = user.email
+        serialized = self.serializer_class(data=request.data)
+        serialized.is_valid(raise_exception=True)
+        user.set_password(serialized.validated_data["new_password"])
+        user.save()
+
+        return Response({"message": "Password has been reset."}, status=status.HTTP_200_OK)

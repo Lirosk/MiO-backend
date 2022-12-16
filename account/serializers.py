@@ -111,3 +111,24 @@ class SetNewPasswordSerializer(serializers.Serializer):
             ...
 
         raise AuthenticationFailed("Reset password credentials are invalid.", 400)
+
+
+class PasswordResetInPlaceSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField()
+    password = serializers.CharField(write_only=True)
+    new_password = serializers.CharField(min_length=8, max_length=128, write_only=True)
+
+    class Meta:
+        model = User
+        fields = ["email", "password", "new_password"]
+
+    def validate(self, attrs):
+        email = attrs.get("email", "")
+        password = attrs.get("password", "")
+
+        user = authenticate(email=email, password=password)
+
+        if not user:
+            raise ValidationError("Invalid credentials.", 400)
+
+        return super().validate(attrs)
