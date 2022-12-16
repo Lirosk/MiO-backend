@@ -22,7 +22,7 @@ class KanbanAPIView(APIView):
     def get(self, request):
         events = models.KanbanEvent.objects.filter(user=request.user)
         serialized = serializers.PatchKanbanSerializer(events, many=True)
-        return Response(serialized.validated_data, status=status.HTTP_200_OK)
+        return Response(serialized.data, status=status.HTTP_200_OK)
 
     @swagger_auto_schema(
         request_body=openapi.Schema(
@@ -37,8 +37,7 @@ class KanbanAPIView(APIView):
         ),
     )
     def put(self, request):
-        for data in request.data:
-            data["user"] = request.user.email
+        self.add_user_to_request(request)
         serialized = serializers.PutKanbanSerializer(
             data=request.data, many=True)
         serialized.is_valid(raise_exception=True)
@@ -59,8 +58,7 @@ class KanbanAPIView(APIView):
         ),
     )
     def patch(self, request):
-        for data in request.data:
-            data["user"] = request.user.email
+        self.add_user_to_request(request)
         serialized = serializers.PatchKanbanSerializer(data=request.data, many=True)
         serialized.is_valid(raise_exception=True)
         for obj in serialized.validated_data:
@@ -83,8 +81,7 @@ class KanbanAPIView(APIView):
         ),
     )
     def delete(self, request):
-        for data in request.data:
-            data["user"] = request.user.email
+        self.add_user_to_request(request)
         serialized = serializers.DeleteKanbanSerializer(data=request.data, many=True)
         serialized.is_valid(raise_exception=True)
         for obj in serialized.validated_data:
@@ -94,4 +91,19 @@ class KanbanAPIView(APIView):
             existing.first().delete()
 
         return Response(serialized.data, status=status.HTTP_200_OK)
-        # serialized.save()
+
+    def add_user_to_request(self, request):
+        try:
+            for data in request.data:
+                data["user"] = request.user.email
+        except TypeError:
+            return Response({"message": "Invalid data format."}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class KanbanCategoriesAPIView(GenericAPIView):
+    serializer_class = serializers.KanbanCategorySerializer
+
+    def get(self, request):
+        categories = models.KanbanCategory.objects.all()
+        serialized = self.serializer_class(categories, many=True)
+        return Response(serialized.data, status=status.HTTP_200_OK)
