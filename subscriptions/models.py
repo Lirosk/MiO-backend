@@ -12,7 +12,6 @@ User = get_user_model()
 
 class Product(TrackingModel):
     stripe_id = models.CharField(
-        primary_key=True,
         unique=True,
         max_length=19,
         null=False,
@@ -71,7 +70,6 @@ class Product(TrackingModel):
 
 class Price(models.Model):
     stripe_id = models.CharField(
-        primary_key=True,
         unique=True,
         max_length=30,
         null=False,
@@ -144,7 +142,6 @@ class Subscriptions(TrackingModel):
     user = models.OneToOneField(
         User,
         on_delete=models.CASCADE,
-        primary_key=True
     )
 
     product = models.OneToOneField(

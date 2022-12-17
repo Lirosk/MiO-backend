@@ -9,7 +9,7 @@ class Redirect(models.Model):
     user = models.OneToOneField(
         User,
         on_delete=models.CASCADE,
-        primary_key=True,
     )
 
     after_email_verification = models.TextField()
+    after_password_reset = models.TextField(null=True)

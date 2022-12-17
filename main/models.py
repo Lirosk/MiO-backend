@@ -1,7 +1,6 @@
 from django.utils import timezone
 from django.apps import apps
 from django.db import models
-from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, UserManager
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.contrib.auth.hashers import make_password
@@ -58,7 +57,6 @@ class MyUser(AbstractBaseUser, PermissionsMixin, TrackingModel):
         _("email address"),
         blank=False,
         unique=True,
-        primary_key=True,
     )
     username = models.CharField(
         _("username"),
