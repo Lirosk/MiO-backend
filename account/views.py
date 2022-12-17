@@ -1,9 +1,8 @@
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.generics import CreateAPIView, GenericAPIView
-from rest_framework import status, views
 from rest_framework.request import Request
-from django.contrib.auth import authenticate
+from rest_framework import status
 from django.contrib.auth import get_user_model
 import jwt
 from django.conf import settings
@@ -15,7 +14,6 @@ from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.utils.encoding import smart_str, force_str, smart_bytes, DjangoUnicodeDecodeError
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.http import HttpResponseRedirect
-
 
 User = get_user_model()
 
@@ -29,6 +27,8 @@ class UserRegisterAPIView(CreateAPIView):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
+
+        user.set_default_subscription()
 
         after_email_verification = serializer.validated_data['redirect_to']
         redirect = models.Redirect(user=user, after_email_verification=after_email_verification)
@@ -101,10 +101,10 @@ class PasswordResetAPIView(GenericAPIView):
         redirect = models.Redirect.objects.filter(user=user)
         if redirect.exists():
             redirect = redirect.first()
-            redirect.after_password_reset = redirect_to
+            redirect.to_client_password_reset = redirect_to
             redirect.save()
         else:
-            models.Redirect(user, after_password_reset=redirect_to).save()
+            models.Redirect(user, to_client_password_reset=redirect_to).save()
 
         uidb64 = urlsafe_base64_encode(smart_bytes(user.id))
         token = PasswordResetTokenGenerator().make_token(user)
@@ -170,3 +170,22 @@ class PasswordResetInPlaceAPIView(GenericAPIView):
         user.save()
 
         return Response({"message": "Password has been reset."}, status=status.HTTP_200_OK)
+
+
+class UserAPIView(GenericAPIView):
+    serializer_class = serializers.UserSubscriptionSerializer
+    
+    def get(self, request):
+        user = request.user
+        subs = subscriptions.models.Subscriptions.objects.filter(user=user)
+        
+        subs = subs.first()
+        product_price = subscriptions.models.ProductPriceFeature.objects.get(product=subs.product)
+        data = {"user": user, "product": product_price.product, "price": product_price.price}
+
+        serializer = self.serializer_class(data)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+import subscriptions.models

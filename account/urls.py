@@ -9,4 +9,5 @@ urlpatterns = [
     path("password-reset/in-place/", views.PasswordResetInPlaceAPIView.as_view(), name="password-reset-in-place"),
     path('password-reset/via-email/', views.PasswordResetAPIView.as_view(), name="password-reset"),
     path('password-reset/set-new/', views.SetNewPasswordAPIView.as_view(), name="set-new-password"),
+    path("user/", views.UserAPIView.as_view(), name="user"),
 ]
