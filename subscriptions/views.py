@@ -21,15 +21,22 @@ class PaymentSessionAPIView(GenericAPIView):
     serializer_class = serializers.PaymentSessionSerializer
     
     product_stripe_id = openapi.Parameter(
-        'product_stripe_id', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING)
+        'product_stripe_id', in_=openapi.IN_BODY, type=openapi.TYPE_STRING)
     success_redirect_url = openapi.Parameter(
-        'success_redirect_url', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING)
+        'success_redirect_url', in_=openapi.IN_BODY, type=openapi.TYPE_STRING)
     cancel_redirect_url = openapi.Parameter(
-        'cancel_redirect_url', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING)
+        'cancel_redirect_url', in_=openapi.IN_BODY, type=openapi.TYPE_STRING)
 
-    @swagger_auto_schema(manual_parameters=[product_stripe_id, success_redirect_url, cancel_redirect_url])
-    def get(self, request):
-        serialized = self.serializer_class(data=request.GET)
+    @swagger_auto_schema(request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            "product_stripe_id": product_stripe_id,
+            "success_redirect_url": success_redirect_url,
+            "cancel_redirect_url": cancel_redirect_url
+        }
+    ))
+    def post(self, request):
+        serialized = self.serializer_class(data=request.data)
         serialized.is_valid(raise_exception=True)
 
         try:
