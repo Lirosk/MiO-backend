@@ -82,7 +82,7 @@ class ProductsAPIView(APIView):
             features = product_and_price.features.select_related()
             for feature in features:
                 serilized_feature = serializers.FeatureSerializer(feature)
-                product_data["features"].append(serilized_feature.data)
+                product_data["features"].append(serilized_feature.data["description"])
 
             data.append(product_data)
 
