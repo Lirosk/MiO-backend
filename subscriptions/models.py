@@ -8,6 +8,7 @@ stripe.api_key = settings.STRIPE_SECRET_API_KEY
 
 User = get_user_model()
 
+
 # Create your models here.
 
 class Product(TrackingModel):
@@ -157,15 +158,22 @@ class Subscriptions(TrackingModel):
         on_delete=models.CASCADE,
     )
 
-    product = models.OneToOneField(
+    product = models.ForeignKey(
         Product,
         on_delete=models.CASCADE
     )
 
     subscription = models.CharField(
-        max_length=36
+        max_length=36,
+        null=True
     )
 
     def delete(self, using: Any = ..., keep_parents: bool = ...) -> Tuple[int, Dict[str, int]]:
-        stripe.Subscription.delete(self.subscription)
-        return super().delete(using, keep_parents)
+        if self.subscription:
+            stripe.Subscription.delete(self.subscription)
+        self.product = default_product
+        self.subscription = None
+        self.save()
+
+
+default_product = Product.objects.get(stripe_id="prod_MxPEoLynfedPOv")

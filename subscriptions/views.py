@@ -52,8 +52,7 @@ class PaymentSessionAPIView(GenericAPIView):
                 cancel_url = serialized.data["cancel_redirect_url"],
             )
 
-            print(checkout_session.url)
-            return HttpResponseRedirect(checkout_session.url)
+            return Response({"checkout_url": checkout_session.url}, status=status.HTTP_200_OK)
         except (models.Product.DoesNotExist, models.ProductPriceFeature.DoesNotExist):
             return Response({"message": "Product with such id does not exists."}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -63,11 +62,11 @@ class ProductsAPIView(APIView):
     permission_classes = [AllowAny]
     
     def get(self, request):
-        # if models.Product.objects.count() == 0:
-        models.Product.get_via_API()
+        if models.Product.objects.count() == 0:
+            models.Product.get_via_API()
 
-        # if models.Price.objects.count() == 0:
-        models.Price.get_via_API()
+        if models.Price.objects.count() == 0:
+            models.Price.get_via_API()
 
         products_and_prices = models.ProductPriceFeature.objects.all().select_related()
         data = []

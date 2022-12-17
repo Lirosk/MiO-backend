@@ -5,6 +5,8 @@ from rest_framework.serializers import ValidationError
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.utils.encoding import force_str
 from django.utils.http import urlsafe_base64_decode
+import subscriptions.models
+import subscriptions.serializers
 
 
 User = get_user_model()
@@ -129,3 +131,23 @@ class PasswordResetInPlaceSerializer(serializers.ModelSerializer):
             raise ValidationError("Invalid credentials.", 400)
 
         return super().validate(attrs)
+
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["email", "date_joined"]
+
+
+class ProductSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = subscriptions.models.Product
+        fields = ["stripe_id", "name", "description"]
+
+class UserSubscriptionSerializer(serializers.Serializer):
+    user = UserSerializer()
+    product = subscriptions.serializers.ProductSerializer()
+    price = subscriptions.serializers.PriceSerializer()
+
+    class Meta:
+        fields = ["user", "product", "price"]

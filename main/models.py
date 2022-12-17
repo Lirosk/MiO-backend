@@ -127,6 +127,21 @@ class MyUser(AbstractBaseUser, PermissionsMixin, TrackingModel):
         return token
 
 
+    def set_default_subscription(self):
+        import subscriptions.models
+        
+        default_product = subscriptions.models.default_product
+        subscription = subscriptions.models.Subscriptions.objects.filter(user=self)
+
+        if not subscription.exists():
+            subscriptions.models.Subscriptions(user=self, product=default_product).save()
+            return
+        
+        subscription = subscription.first()
+        subscription.product = default_product
+        subscription.subscription = None
+
+
 class CalendarEvent(TrackingModel):
     user = models.ForeignKey(
         MyUser,
