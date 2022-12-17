@@ -12,4 +12,4 @@ class Redirect(models.Model):
     )
 
     after_email_verification = models.TextField()
-    after_password_reset = models.TextField(null=True)
+    to_client_password_reset = models.TextField(null=True)

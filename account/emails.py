@@ -23,7 +23,7 @@ def send_account_verification_email(user, request, relative_link):
     
 def send_password_reset_email(user, uidb64, token):
     redirect = models.Redirect.objects.get(user=user)
-    abs_url = f"{redirect.after_password_reset}?uidb64={uidb64}&token={token}"
+    abs_url = f"{redirect.to_client_password_reset}?uidb64={uidb64}&token={token}"
 
     subject = "MiO Password Reset"
     message = f"To reset your password, please use the link below:\n{abs_url}"
