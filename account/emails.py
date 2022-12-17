@@ -2,6 +2,8 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.sites.shortcuts import get_current_site
+from . import models
+
 
 User = get_user_model()
 EMAIL_FROM = settings.EMAIL_HOST
@@ -13,13 +15,15 @@ def send_account_verification_email(user, request, relative_link):
 
     subject = "MiO Email Verification"
     message = f"To verify you email, please go to the following link:\n.{abs_url}"
+
     sent_count = send_mail(subject, message, EMAIL_FROM, [user.email])
 
     if sent_count == 0:
         raise Exception('Email isn\'t sent.')
     
 def send_password_reset_email(user, uidb64, token):
-    abs_url = f"{user.redirect_to}?uidb64={uidb64}&token={token}"
+    redirect = models.Redirect.objects.get(user=user)
+    abs_url = f"{redirect.after_password_reset}?uidb64={uidb64}&token={token}"
 
     subject = "MiO Password Reset"
     message = f"To reset your password, please use the link below:\n{abs_url}"

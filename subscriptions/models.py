@@ -101,28 +101,41 @@ class Price(models.Model):
     def get_via_API(cls):
         prices_data = stripe.Price.list().data
 
-        prices = []
+        prices_and_products = []
         for price_data in prices_data:
             try:
-                price = cls(
+                price_and_product = cls(
                     stripe_id = price_data["id"],
-                    product_id = Product.objects.get(stripe_id=price_data["product"]),
-                    per_unit = price_data["unit_amount"] / 100.,
+                    per_unit = price_data["unit_amount"],
                     period = price_data["recurring"]["interval"],
                     currency = price_data["currency"]
                 )
 
-                prices.append(price)
+                prices_and_products.append({"price": price_and_product, "product": price_data["product"]})
             except Product.DoesNotExist:
                 ...
                 
-        for price in prices:
+        for price_and_product in prices_and_products:
+            price = price_and_product["price"]
+            product_id = price_and_product["product"]
+
             try:
                 saved_price = cls.objects.get(stripe_id=price.stripe_id)
                 saved_price.copy_fields(price)
                 saved_price.save()
             except cls.DoesNotExist:
                 price.save()
+
+            prods = [*Product.objects.all()]
+            product = Product.objects.filter(stripe_id=product_id)
+
+            if not product.exists():
+                continue
+            product = product.first()
+
+            stored_price_and_product = ProductPriceFeature.objects.filter(product=product, price=price)
+            if not stored_price_and_product.exists():
+                ProductPriceFeature(product=product, price=price)
 
 
 class Feature(models.Model):

@@ -63,11 +63,11 @@ class ProductsAPIView(APIView):
     permission_classes = [AllowAny]
     
     def get(self, request):
-        if models.Product.objects.count() == 0:
-            models.Product.get_via_API()
+        # if models.Product.objects.count() == 0:
+        models.Product.get_via_API()
 
-        if models.Price.objects.count() == 0:
-            models.Price.get_via_API()
+        # if models.Price.objects.count() == 0:
+        models.Price.get_via_API()
 
         products_and_prices = models.ProductPriceFeature.objects.all().select_related()
         data = []
@@ -86,7 +86,7 @@ class ProductsAPIView(APIView):
 
             data.append(product_data)
 
-        return Response({"products": data}, status=status.HTTP_200_OK)
+        return Response(data, status=status.HTTP_200_OK)
 
 
 class StripeWebhookAPIView(APIView):

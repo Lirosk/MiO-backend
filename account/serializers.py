@@ -24,7 +24,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         }
 
     def create(self, validated_data):
-        user = User.objects.create_user(**validated_data)
+        user = User.objects.create_user(email=validated_data["email"], password=validated_data["password"])
         return user
 
 
@@ -76,9 +76,6 @@ class PasswordResetSerializer(serializers.Serializer):
             user = User.objects.get(email=email)
             if not user.email_verified:
                 raise ValidationError('Email is not validated.')
-
-            user.redirect_to = redirect_to
-            user.save()
         except User.DoesNotExist as e:
             raise ValidationError('User with given email does not exists.')
 

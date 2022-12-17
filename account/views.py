@@ -95,13 +95,20 @@ class PasswordResetAPIView(GenericAPIView):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        try:
-            user = User.objects.get(email=serializer.validated_data['email'])
-            uidb64 = urlsafe_base64_encode(smart_bytes(user.id))
-            token = PasswordResetTokenGenerator().make_token(user)
-            emails.send_password_reset_email(user, uidb64, token)
-        except User.DoesNotExist as e:
-            return Response({'message': 'User with such email does not exist.'}, status=status.HTTP_400_BAD_REQUEST)
+        redirect_to = serializer.validated_data["redirect_to"]
+        user = User.objects.get(email=serializer.validated_data['email'])
+
+        redirect = models.Redirect.objects.filter(user=user)
+        if redirect.exists():
+            redirect = redirect.first()
+            redirect.after_password_reset = redirect_to
+            redirect.save()
+        else:
+            models.Redirect(user, after_password_reset=redirect_to).save()
+
+        uidb64 = urlsafe_base64_encode(smart_bytes(user.id))
+        token = PasswordResetTokenGenerator().make_token(user)
+        emails.send_password_reset_email(user, uidb64, token)
 
         return Response({'message': 'Link has been sent to your mail.'}, status=status.HTTP_200_OK)
 

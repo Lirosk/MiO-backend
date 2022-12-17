@@ -150,7 +150,6 @@ class CalendarEvent(TrackingModel):
 class KanbanCategory(models.Model):
     name = models.CharField(
         max_length=32,
-        primary_key=True,
     )
 
 
