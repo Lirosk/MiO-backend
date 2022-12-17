@@ -127,8 +127,12 @@ class StripeWebhookAPIView(APIView):
                 product = models.Product.objects.get(stripe_id=product)
                 subscription = session["subscription"]
 
-                models.Subscriptions(user=user, product=product, subscription=subscription).save()
-                
+                existing = models.Subscriptions.objects.get(user=user)
+                existing.clear()
+
+                existing.product = product
+                existing.subscription = subscription
+                existing.save()
             except (User.DoesNotExist, models.Product.DoesNotExist):
                 return Response({"message": "User with such email or product with such id doesn't exists."}, status=status.HTTP_400_BAD_REQUEST)
 
