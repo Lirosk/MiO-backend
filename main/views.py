@@ -6,6 +6,7 @@ from . import serializers
 from . import models
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
+from django.http import HttpResponseRedirect
 from .import APIs
 
 # Create your views here.
@@ -133,9 +134,12 @@ class KanbanCategoriesAPIView(GenericAPIView):
     serializer_class = serializers.KanbanCategorySerializer
 
     def get(self, request):
-        categories = models.KanbanCategory.objects.all()
+        categories = models.KanbanCategory.objects.all().order_by("order")
         serialized = self.serializer_class(categories, many=True)
-        return Response(serialized.data, status=status.HTTP_200_OK)
+        res = []
+        for obj in serialized.data:
+            res.append(obj["name"])
+        return Response(res, status=status.HTTP_200_OK)
 
 
 class CalendarAPIView(APIView):
@@ -269,3 +273,73 @@ class CalendarAPIView(APIView):
             existing.first().delete()
 
         return Response(serialized.data, status=status.HTTP_200_OK)
+
+
+class GoogleAuthorizeAPIView(GenericAPIView):
+    serializer_class = serializers.SocialNetworkAuthenticationSerializer
+
+    @swagger_auto_schema(
+        request_body=serializers.SocialNetworkAuthenticationSerializer,
+        responses={
+            200: openapi.Response(
+                "Success",
+                openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        "authorization_url": openapi.Parameter(
+                            "authorization_url",
+                            in_=openapi.IN_BODY,
+                            type=openapi.TYPE_STRING
+                        )
+                    })
+            )
+        }
+    )
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid()
+        auth_url, state = APIs.Google.get_authorization_url(f"https://c8eb-46-53-253-96.eu.ngrok.io/statistics/google/authorized/")
+        models.GoogleCredentials.create_update(user=request.user, state=state, redirect_after_login=serializer.validated_data["redirect_url"])
+        return Response({"authorization_url": auth_url}, status=status.HTTP_200_OK)
+
+
+class GoogleAuthorizedAPIView(APIView):
+    authentication_classes = []
+
+    def get(self, request):
+        credentials = APIs.Google.fetch(request)
+        return HttpResponseRedirect(credentials.redirect_after_login)
+
+
+class SocialNetworkStatisticsAPIView(GenericAPIView):
+    serializer_class = serializers.SocialNetworkStatisticsSerializer
+
+    @swagger_auto_schema(request_body=serializers.SocialNetworkStatisticsSerializer)
+    def post(self, request, social_network=None, content_type=None, metric=None):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        social_network = social_network.lower() or ""
+
+        if social_network not in APIs.available:
+            return Response({"message": "Unsupported social network."}, status=status.HTTP_400_BAD_REQUEST)
+
+        api = APIs.available[social_network]
+
+        kwargs = {}
+        method = api.get
+
+        if content_type is not None:
+            if content_type.lower() == "user":
+                method = api.user
+            else:
+                def wrapper(*args, **kwargs):
+                    api.content_type(*args, **kwargs,content_type=content_type)
+                method = wrapper
+
+        res = method(request.user, metric=metric, **serializer.validated_data)
+
+        return Response(
+            res,
+            status=status.HTTP_200_OK
+        )

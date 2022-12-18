@@ -151,6 +151,7 @@ class KanbanCategory(models.Model):
     name = models.CharField(
         max_length=32,
     )
+    order = models.IntegerField(null=True)
 
 
 class KanbanEvent(TrackingModel):
@@ -179,3 +180,38 @@ class StatisticMetric(models.Model):
 
 class MetricValue(models.Model):
     ...
+
+
+class GoogleCredentials(TrackingModel):
+    user = models.OneToOneField(
+        MyUser,
+        on_delete=models.CASCADE
+    )
+    state = models.TextField(null=True)
+    token = models.TextField(null=True)
+    refresh_token = models.TextField(null=True)
+    token_uri = models.TextField(null=True)
+    client_id = models.TextField(null=True)
+    client_secret = models.TextField(null=True)
+    scopes = models.TextField(null=True)
+    redirect_after_login = models.TextField(null=True)
+
+    @classmethod
+    def create_update(cls, *, instance=None, user=None, **kwargs):
+        credentials = None
+        if instance is not None and isinstance(instance, cls):
+            credentials = instance
+        elif user is not None:
+            credentials = cls.objects.filter(user=user)
+            if not credentials.exists():
+                credentials = cls(user=user, **kwargs)
+                credentials.save()
+                return credentials
+
+            credentials = credentials.first()
+        
+        for attr, value in kwargs.items(): 
+            setattr(credentials, attr, value)
+
+        credentials.save()
+        return credentials

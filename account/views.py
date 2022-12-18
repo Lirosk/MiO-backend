@@ -78,7 +78,7 @@ class EmailVerificationAPIView(GenericAPIView):
         except jwt.exceptions.ExpiredSignatureError as e:
             try:
                 user = User.objects.get(email=email)
-                emails.end_account_verification_email(user, request, "account/verify-email/")
+                emails.send_account_verification_email(user, request, "account/verify-email/")
             except User.DoesNotExist: ...
             return Response({'message': "Verify email token expired."}, status=status.HTTP_400_BAD_REQUEST)
         except jwt.exceptions.DecodeError as e:
