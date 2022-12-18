@@ -1,14 +1,14 @@
-from django.utils import timezone
-from django.apps import apps
 from django.db import models
-from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, UserManager
-from django.contrib.auth.validators import UnicodeUsernameValidator
-from django.contrib.auth.hashers import make_password
+from utils.models import TrackingModel
 from django.utils.translation import gettext_lazy as _
 import jwt
 from django.conf import settings
 from datetime import datetime, timedelta
-from utils.models import TrackingModel
+from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, UserManager
+from django.contrib.auth.validators import UnicodeUsernameValidator
+from django.utils import timezone
+from django.apps import apps
+from django.contrib.auth.hashers import make_password
 
 
 class MyUserManager(UserManager):
@@ -125,21 +125,6 @@ class MyUser(AbstractBaseUser, PermissionsMixin, TrackingModel):
         )
 
         return token
-
-
-    def set_default_subscription(self):
-        import subscriptions.models
-        
-        default_product = subscriptions.models.default_product
-        subscription = subscriptions.models.Subscriptions.objects.filter(user=self)
-
-        if not subscription.exists():
-            subscriptions.models.Subscriptions(user=self, product=default_product).save()
-            return
-        
-        subscription = subscription.first()
-        subscription.product = default_product
-        subscription.subscription = None
 
 
 class CalendarEvent(TrackingModel):
