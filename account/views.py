@@ -14,6 +14,7 @@ from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.utils.encoding import smart_str, force_str, smart_bytes, DjangoUnicodeDecodeError
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.http import HttpResponseRedirect
+from utils import utils
 
 User = get_user_model()
 
@@ -28,7 +29,7 @@ class UserRegisterAPIView(CreateAPIView):
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
 
-        user.set_default_subscription()
+        utils.set_default_subscription(user)
 
         after_email_verification = serializer.validated_data['redirect_to']
         redirect = models.Redirect(user=user, after_email_verification=after_email_verification)

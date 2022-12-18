@@ -149,6 +149,16 @@ class StripeWebhookAPIView(APIView):
 class CancelSubscriptionAPIView(GenericAPIView):
     serializer_class = serializers.CancelSubscriptionSerializer
 
+    @swagger_auto_schema(request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            "password": openapi.Parameter(
+                "password", 
+                in_=openapi.IN_BODY, 
+                type=openapi.TYPE_STRING
+            )
+        }
+    ))
     def post(self, request):
         serialized = self.serializer_class(data={"email": request.user.email, "password": request.data.get("password")})
         serialized.is_valid(raise_exception=True)
@@ -157,7 +167,7 @@ class CancelSubscriptionAPIView(GenericAPIView):
 
         try:
             subscription = models.Subscriptions.objects.get(user=user)
-            subscription.delete()
+            subscription.clear()
         except models.Subscriptions.DoesNotExist:
             ...
         

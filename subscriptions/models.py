@@ -168,7 +168,7 @@ class Subscriptions(TrackingModel):
         null=True
     )
 
-    def delete(self, using: Any = ..., keep_parents: bool = ...) -> Tuple[int, Dict[str, int]]:
+    def clear(self):
         if self.subscription:
             stripe.Subscription.delete(self.subscription)
         self.product = default_product
