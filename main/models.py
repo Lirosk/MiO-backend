@@ -192,23 +192,23 @@ class UserToSocialNetwork(models.Model):
 
 
 class SocialNetworkToStatisticMetric(models.Model):
-    social_network = models.OneToOneField(SocialNetwork, on_delete=models.CASCADE)
+    social_network = models.ForeignKey(UserToSocialNetwork, on_delete=models.CASCADE)
     user_metric = models.ForeignKey(StatisticMetric, on_delete=models.DO_NOTHING)
 
 
 class SocialNetworkToContentType(models.Model):
-    social_network = models.OneToOneField(SocialNetwork, on_delete=models.CASCADE)
+    social_network = models.ForeignKey(UserToSocialNetwork, on_delete=models.CASCADE)
     content_type = models.ForeignKey(ContentType, on_delete=models.DO_NOTHING)
 
 
-class StatisticMetricToMetricValue(models.Model):
-    statistic_metric = models.OneToOneField(StatisticMetric, on_delete=models.CASCADE)
-    metric_value = models.ForeignKey(MetricValue, on_delete=models.DO_NOTHING)
-
-
 class ContentTypeToStatisticMetric(models.Model):
-    content_type = models.OneToOneField(ContentType, on_delete=models.CASCADE)
+    content_type = models.ForeignKey(SocialNetworkToContentType, on_delete=models.CASCADE)
     statistic_metric = models.ForeignKey(StatisticMetric, on_delete=models.DO_NOTHING)
+
+
+class StatisticMetricToMetricValue(models.Model):
+    statistic_metric = models.ForeignKey(SocialNetworkToStatisticMetric, on_delete=models.CASCADE)
+    metric_value = models.ForeignKey(MetricValue, on_delete=models.DO_NOTHING)
 
 
 class GoogleCredentials(TrackingModel):

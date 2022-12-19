@@ -14,7 +14,6 @@ from oauthlib.oauth2.rfc6749 import errors
 dir_path = pathlib.Path(__file__).parent.resolve()
 
 
-
 class API:
     @classmethod
     def name(cls):
@@ -57,8 +56,51 @@ class API:
     @classmethod
     def is_user_authorized(cls, user): ...
 
-    @staticmethod
-    def save_metric_value(cls, user, content_type_name, metric_name, metric_value, metric_date): ...
+    @classmethod
+    def save_metric_value(cls, user, content_type_name, metric_name, metric_value, metric_date):
+        social_network_name = cls.name()
+        user_to_social_network = models.SocialNetwork.objects.get(name=social_network_name)
+        user_to_social_network = models.UserToSocialNetwork.objects.filter(user=user, social_network=user_to_social_network)
+        if user_to_social_network.exists():
+            user_to_social_network = user_to_social_network.first()
+        else:
+            user_to_social_network = models.UserToSocialNetwork(user=user, social_network=user_to_social_network)
+            user_to_social_network.save()
+
+        on_date = datetime.fromisoformat(metric_date)
+
+        user_to_social_network
+        if content_type_name == "user":
+            statistic_metric = models.StatisticMetric.objects.filter(name=metric_name)
+            if statistic_metric.exists():
+                statistic_metric = statistic_metric.first()
+            else:
+                statistic_metric = models.StatisticMetric(name=metric_name)
+                statistic_metric.save()
+            
+            social_network_to_statistic_metric = models.SocialNetworkToStatisticMetric.objects.filter(social_network=user_to_social_network, user_metric=statistic_metric)
+            if social_network_to_statistic_metric.exists():
+                social_network_to_statistic_metric = social_network_to_statistic_metric.first()
+            else:
+                social_network_to_statistic_metric = models.SocialNetworkToStatisticMetric(social_network=user_to_social_network, user_metric=statistic_metric)
+                social_network_to_statistic_metric.save()
+
+            statistic_metric_to_metric_value = models.StatisticMetricToMetricValue.objects.filter(statistic_metric=social_network_to_statistic_metric)
+            if statistic_metric_to_metric_value.exists():
+                related = [*statistic_metric_to_metric_value.select_related().all()]
+                for found in related:
+                    metric_value = found.metric_value
+                    if metric_value.on_date == on_date:
+                        metric_value.value = metric_value
+                        metric_value.save()
+            else:
+                metric_value = models.MetricValue(value=metric_value, on_date=metric_date)
+                metric_value.save()
+
+                statistic_metric_to_metric_value = models.StatisticMetricToMetricValue(statistic_metric=social_network_to_statistic_metric, metric_value=metric_value)
+                statistic_metric_to_metric_value.save()
+
+        return
 
 
 class YouTube(API):
@@ -83,16 +125,11 @@ class YouTube(API):
         SCOPES
     )
 
-    @staticmethod
-    def save_metric_value(cls, user, content_type_name, metric_name, metric_value, metric_date):
-        ...
-
     @classmethod
     def get_authorization_url(cls, redirect_url):
         cls.flow.redirect_uri = f"{redirect_url}"
         return cls.flow.authorization_url()
 
-    @property
     @classmethod
     def scope(cls):
         return ",".join(cls.SCOPES)
@@ -220,6 +257,7 @@ class YouTube(API):
     def define_period_and_dates(cls, period, start_date, end_date):
         now = datetime.now()
 
+        period = period or "month"
         start_date = start_date or f"{now.year-1 if period == 'month' else now.year}-{now.month -1 if period=='day' else now.month}-{'01' if (period == 'month') else now.day}"
         end_date = end_date or f"{now.year}-{now.month}-{'01' if (period == 'month') else now.day}"
 
@@ -297,17 +335,20 @@ class YouTube(API):
                     "on_date": on_date
                 })
 
+                cls.save_metric_value(user, "user", metric["name"], row[i], on_date)
+
         return formatted_result.values()
 
     @classmethod
-    def get(cls, user):
-        return {}
+    def get(cls, user, **kwargs):
+        return {
+            "name": cls.name(),
+            "user_metrics": cls.user(user, **kwargs)
+        }
 
     @classmethod
     def content_type(cls, user, *, content_type=None, metric=None, period=None, start_date=None, end_date=None):
         youtube = cls.get_data_service(user)
-
-        r = youtube.channels().list("statistics")
 
         return []
 
