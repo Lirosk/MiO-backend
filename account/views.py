@@ -15,6 +15,7 @@ from django.utils.encoding import smart_str, force_str, smart_bytes, DjangoUnico
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.http import HttpResponseRedirect
 from utils import utils
+from main import APIs
 
 User = get_user_model()
 
@@ -186,7 +187,20 @@ class UserAPIView(GenericAPIView):
 
         serializer = self.serializer_class(data)
 
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        socialnetworks = {}
+
+        for socialnetwork, api in APIs.available.items():
+            socialnetworks[socialnetwork] = api.is_user_authorized(user)
+
+        available_more = utils.can_user_connect_more_social_networks(user)
+
+        res = {**serializer.data}
+        res["social_networks"] = {
+            "connected": socialnetworks,
+            "available_more": available_more
+        }
+
+        return Response(res, status=status.HTTP_200_OK)
 
 
 import subscriptions.models

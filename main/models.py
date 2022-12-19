@@ -94,6 +94,9 @@ class MyUser(AbstractBaseUser, PermissionsMixin, TrackingModel):
             "Designates whether this users email should is verified."
         ),
     )
+    connected_social_networks = models.IntegerField(
+        default=0
+    )
 
     objects = MyUserManager()
 
