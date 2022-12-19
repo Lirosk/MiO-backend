@@ -170,19 +170,35 @@ class KanbanEvent(TrackingModel):
 
 
 class SocialNetwork(models.Model):
-    ...
+    name = models.TextField()
 
 
 class ContentType(models.Model):
-    ...
-
+    name = models.TextField()
+    
 
 class StatisticMetric(models.Model):
-    ...
+    name = models.TextField()
 
 
 class MetricValue(models.Model):
-    ...
+    value = models.IntegerField()
+    on_date = models.DateField()
+
+
+class SocialNetworkToStatisticMetric(models.Model):
+    social_network = models.OneToOneField(SocialNetwork, on_delete=models.CASCADE)
+    user_metric = models.ForeignKey(StatisticMetric, on_delete=models.DO_NOTHING)
+
+
+class SocialNetworkToContentType(models.Model):
+    social_network = models.OneToOneField(SocialNetwork, on_delete=models.CASCADE)
+    content_type = models.ForeignKey(ContentType, on_delete=models.DO_NOTHING)
+
+
+class StatisticMetricToMetricValue(models.Model):
+    statistic_metric = models.OneToOneField(StatisticMetric, on_delete=models.CASCADE)
+    metric_value = models.ForeignKey(MetricValue, on_delete=models.DO_NOTHING)
 
 
 class GoogleCredentials(TrackingModel):
@@ -218,3 +234,11 @@ class GoogleCredentials(TrackingModel):
 
         credentials.save()
         return credentials
+
+
+class TikTokCredentials(TrackingModel):
+    user = models.OneToOneField(
+        MyUser,
+        on_delete=models.CASCADE
+    )
+    redirect_after_login = models.TextField(null=True)

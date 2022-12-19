@@ -275,7 +275,7 @@ class CalendarAPIView(APIView):
         return Response(serialized.data, status=status.HTTP_200_OK)
 
 
-class GoogleAuthorizeAPIView(GenericAPIView):
+class SocialNetworkAuthorizeAPIView(GenericAPIView):
     serializer_class = serializers.SocialNetworkAuthenticationSerializer
 
     @swagger_auto_schema(
@@ -295,20 +295,31 @@ class GoogleAuthorizeAPIView(GenericAPIView):
             )
         }
     )
-    def post(self, request):
+    def post(self, request, social_network):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid()
-        auth_url, state = APIs.Google.get_authorization_url(f"https://c8eb-46-53-253-96.eu.ngrok.io/statistics/google/authorized/")
-        models.GoogleCredentials.create_update(user=request.user, state=state, redirect_after_login=serializer.validated_data["redirect_url"])
+        social_network = social_network.lower()
+        if social_network not in APIs.available:
+            return Response({"message": "Unsupported social network."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        api = APIs.available[social_network]
+        auth_url = api.authorize(request.user, serializer.validated_data.get("redirect_url"))
+        
         return Response({"authorization_url": auth_url}, status=status.HTTP_200_OK)
 
 
-class GoogleAuthorizedAPIView(APIView):
+class SocialNetworkAuthorizedAPIView(APIView):
     authentication_classes = []
 
-    def get(self, request):
-        credentials = APIs.Google.fetch(request)
-        return HttpResponseRedirect(credentials.redirect_after_login)
+    def get(self, request, social_network):
+        social_network = social_network.lower()
+        if social_network not in APIs.available:
+            return Response({"message": "Unsupported social network."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        api = APIs.available[social_network]
+        redirect_after_login = api.authorized(request)
+        return HttpResponseRedirect(redirect_after_login)
+        
 
 
 class SocialNetworkStatisticsAPIView(GenericAPIView):
@@ -319,7 +330,7 @@ class SocialNetworkStatisticsAPIView(GenericAPIView):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         
-        social_network = social_network.lower() or ""
+        social_network = social_network.lower()
 
         if social_network not in APIs.available:
             return Response({"message": "Unsupported social network."}, status=status.HTTP_400_BAD_REQUEST)
@@ -343,3 +354,16 @@ class SocialNetworkStatisticsAPIView(GenericAPIView):
             res,
             status=status.HTTP_200_OK
         )
+
+
+class CancelSocialNetworkAPIView(APIView):
+    def get(self, request, social_network):        
+        social_network = social_network.lower()
+
+        if social_network not in APIs.available:
+            return Response({"message": "Unsupported social network."}, status=status.HTTP_400_BAD_REQUEST)
+
+        api = APIs.available[social_network]
+        api.cancel(request.user)
+
+        return Response({}, status=status.HTTP_200_OK)

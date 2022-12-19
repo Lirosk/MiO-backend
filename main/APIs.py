@@ -1,17 +1,39 @@
 import requests
+from rest_framework import exceptions
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import Flow
-from rest_framework import exceptions
 import os
 from google.oauth2.credentials import Credentials
 import pathlib
 from datetime import datetime, date
 from . import models
 from .serializers import GoogleCredentialsSerializer
+from utils import utils
+from oauthlib.oauth2.rfc6749 import errors
+
 dir_path = pathlib.Path(__file__).parent.resolve()
 
 
-class Google:
+
+class API:
+    @classmethod
+    def name(cls):
+        return cls.__name__
+
+    @classmethod
+    def authorize(cls, user, redirect_url): ...
+
+    @classmethod
+    def authorized(cls, request): ...
+
+    @classmethod
+    def cancel(cls, user): ...
+
+    @classmethod
+    def is_user_authorized(cls, user): ...
+
+
+class YouTube(API):
     SCOPES = [
         "https://www.googleapis.com/auth/yt-analytics.readonly",
         "https://www.googleapis.com/auth/youtube.readonly",
@@ -45,17 +67,39 @@ class Google:
 
     @classmethod
     def fetch(cls, request):
-        code = request.GET["code"]
-        cls.flow.fetch_token(code=code)
-        credentials = cls.flow.credentials
+        if "code" not in request.GET:
+            raise exceptions.APIException("Invalid credentials.", 400)
 
+        code = request.GET["code"]
         state = request.GET["state"]
+
+        credentials = ...
+
+        try:
+            # flow = Flow.from_client_secrets_file(cls.secrets_file, cls.SCOPES, state=state)
+            flow = cls.flow
+            # flow.redirect_uri = "http://localhost/oauth2callback"
+            flow.fetch_token(code=code)
+            credentials = flow.credentials
+        except errors.InvalidGrantError:
+            raise exceptions.APIException("Invalid credentials", 400)
+        
         saved_credentials = models.GoogleCredentials.objects.filter(
             state=state)
         if not saved_credentials.exists():
             raise exceptions.APIException("Invalid credentials", 400)
 
         saved_credentials = saved_credentials.first()
+
+        user = saved_credentials.user
+
+        if not saved_credentials.token and not utils.can_user_connect_more_social_networks(user):
+            raise exceptions.APIException("This user can't connect more social networks.")
+
+        if not saved_credentials.token:
+            user.connected_social_networks += 1
+            user.save()
+
         res_credentials = models.GoogleCredentials.create_update(
             instance=saved_credentials,
             token=credentials.token,
@@ -68,10 +112,31 @@ class Google:
         return res_credentials
 
     @classmethod
-    def revoke_token(cls, request):
+    def revoke_token(cls, credentials):
         requests.post('https://oauth2.googleapis.com/revoke',
-                      params={'token': request.session["credentials"].token},
+                      params={'token': credentials.token},
                       headers={'content-type': 'application/x-www-form-urlencoded'})
+
+    @classmethod
+    def cancel(cls, user):
+        credentials = models.GoogleCredentials.objects.filter(user=user).first()
+        if not credentials.token:
+            credentials.delete()
+            return
+        credentials.user.connected_social_networks -= 1
+        credentials.user.save()
+        cls.revoke_token(credentials)
+        credentials.delete()
+
+    @classmethod
+    def is_user_authorized(cls, user):
+        google_credentials = models.GoogleCredentials.objects.filter(user=user)
+        if not google_credentials.exists():
+            return False
+
+        google_credentials = google_credentials.first()
+        return bool(google_credentials.client_id)
+
 
     @classmethod
     def execute_api_request(cls, client_library_function, **kwargs):
@@ -119,6 +184,7 @@ class Google:
     @classmethod
     def define_period_and_dates(cls, period, start_date, end_date):
         now = datetime.now()
+
         start_date = start_date or f"{now.year-1}-{now.month}-{'01' if (period == 'day') else now.day}"
         end_date = end_date or f"{now.year}-{now.month}-{'01' if (period == 'day') else now.day}"
 
@@ -136,11 +202,30 @@ class Google:
 
         return period, start_date, end_date
 
+
+    @classmethod
+    def authorize(cls, user, redirect_after_login):
+        auth_url, state = cls.get_authorization_url(f"https://c8eb-46-53-253-96.eu.ngrok.io/statistics/youtube/authorized/")
+        models.GoogleCredentials.create_update(user=user, state=state, redirect_after_login=redirect_after_login)
+        print(f"{user.email}: {auth_url=}")
+        return auth_url
+
+    @classmethod
+    def authorized(cls, request):
+        return cls.fetch(request).redirect_after_login
+
+
     @classmethod
     def user(cls, user, *, metric=None, period=None, start_date=None, end_date=None):
+        # if not start_date:
+        #     youtube = cls.get_data_service(user)
+        #     s = youtube.channels().list("statistics", mine=True)
+
         youtubeAnalytics = cls.get_analytics_service(user)
+
         period, start_date, end_date = cls.define_period_and_dates(
-            period, start_date, end_date)
+            period, start_date, end_date
+        )
 
         res = cls.execute_api_request(
             youtubeAnalytics.reports().query,
@@ -187,11 +272,36 @@ class Google:
     def content_type(cls, user, *, content_type=None, metric=None, period=None, start_date=None, end_date=None):
         youtube = cls.get_data_service(user)
 
-        res = cls.execute_api_request(
-            youtube
-        )
+        r = youtube.channels().list("statistics")
 
         return []
 
 
-available = {"youtube": Google}
+class TikTok(API):
+    @classmethod
+    def authorize(cls, user, redirect_url):
+        credentials = models.TikTokCredentials.objects.filter(user=user)
+        
+        if not credentials.exists() and not utils.can_user_connect_more_social_networks(user):
+            raise exceptions.APIException("This user can't connect more social networks.")
+
+        models.TikTokCredentials(user=user).save()
+        user.connected_social_networks += 1
+        user.save()
+
+        return redirect_url
+
+    @classmethod
+    def authorized(cls, request):
+        return ""
+
+    @classmethod
+    def cancel(cls, user):
+        models.TikTokCredentials.objects.filter(user=user).delete()
+
+    @classmethod
+    def is_user_authorized(cls, user):
+        return models.TikTokCredentials.objects.filter(user=user).exists()
+
+
+available = {"youtube": YouTube, "tiktok": TikTok}
