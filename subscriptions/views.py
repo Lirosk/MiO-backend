@@ -135,7 +135,7 @@ class StripeWebhookAPIView(APIView):
                 product = models.Product.objects.get(stripe_id=product)
                 subscription = session["subscription"]
 
-                existing = models.Subscriptions.objects.get(user=user)
+                existing = models.Subscription.objects.get(user=user)
                 existing.clear()
 
                 existing.product = product
@@ -170,9 +170,9 @@ class CancelSubscriptionAPIView(GenericAPIView):
             return Response({"message": "Disconnect unwished social networks firstly."}, 400)
 
         try:
-            subscription = models.Subscriptions.objects.get(user=user)
+            subscription = models.Subscription.objects.get(user=user)
             subscription.clear()
-        except models.Subscriptions.DoesNotExist:
+        except models.Subscription.DoesNotExist:
             ...
         
         return Response({}, status=status.HTTP_200_OK)

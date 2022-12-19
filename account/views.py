@@ -179,7 +179,7 @@ class UserAPIView(GenericAPIView):
     
     def get(self, request):
         user = request.user
-        subs = subscriptions.models.Subscriptions.objects.filter(user=user)
+        subs = subscriptions.models.Subscription.objects.filter(user=user)
         
         subs = subs.first()
         product_price = subscriptions.models.ProductPriceFeature.objects.get(product=subs.product)

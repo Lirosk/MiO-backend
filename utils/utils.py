@@ -1,13 +1,13 @@
-from subscriptions.models import Subscriptions, default_product
+from subscriptions.models import Subscription, default_product
 from main import APIs
 from subscriptions.models import default_product
 from django.conf import settings
 
 def set_default_subscription(user):
-    subscription = Subscriptions.objects.filter(user=user)
+    subscription = Subscription.objects.filter(user=user)
 
     if not subscription.exists():
-        Subscriptions(user=user, product=default_product).save()
+        Subscription(user=user, product=default_product).save()
         return
     
     subscription = subscription.first()
@@ -17,7 +17,7 @@ def set_default_subscription(user):
 
 
 def can_user_connect_more_social_networks(user):
-    ppf = Subscriptions.objects.get(user=user)
+    ppf = Subscription.objects.get(user=user)
     if ppf.product.stripe_id != default_product.stripe_id:
         return True
 

@@ -206,6 +206,11 @@ class StatisticMetricToMetricValue(models.Model):
     metric_value = models.ForeignKey(MetricValue, on_delete=models.DO_NOTHING)
 
 
+class ContentTypeToStatisticMetric(models.Model):
+    content_type = models.OneToOneField(ContentType, on_delete=models.CASCADE)
+    statistic_metric = models.ForeignKey(StatisticMetric, on_delete=models.DO_NOTHING)
+
+
 class GoogleCredentials(TrackingModel):
     user = models.OneToOneField(
         MyUser,

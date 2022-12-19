@@ -152,7 +152,7 @@ class ProductPriceFeature(models.Model):
     features = models.ManyToManyField(to=Feature)
 
 
-class Subscriptions(TrackingModel):
+class Subscription(TrackingModel):
     user = models.OneToOneField(
         User,
         on_delete=models.CASCADE,
