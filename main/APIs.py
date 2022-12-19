@@ -21,16 +21,44 @@ class API:
         return cls.__name__
 
     @classmethod
+    def db_connect_user(cls, user):
+        s = models.SocialNetwork.objects.filter(name=cls.name())
+        if not s.exists():
+            return
+
+        s = s.first()
+        us = models.UserToSocialNetwork.objects.filter(user=user, social_network=s)
+        if not us.exists():
+            models.UserToSocialNetwork(user=user, social_network=s).save()
+
+
+    @classmethod
+    def db_disconnect_user(cls, user):
+        s = models.SocialNetwork.objects.filter(name=cls.name())
+        if not s.exists():
+            return
+
+        s = s.first()
+        us = models.UserToSocialNetwork.objects.filter(user=user, social_network=s)
+        if us.exists():
+            us.delete()
+
+
+    @classmethod
     def authorize(cls, user, redirect_url): ...
 
     @classmethod
     def authorized(cls, request): ...
 
     @classmethod
-    def cancel(cls, user): ...
+    def cancel(cls, user):
+        cls.db_disconnect_user(user)
 
     @classmethod
     def is_user_authorized(cls, user): ...
+
+    @staticmethod
+    def save_metric_value(cls, user, content_type_name, metric_name, metric_value, metric_date): ...
 
 
 class YouTube(API):
@@ -54,6 +82,10 @@ class YouTube(API):
         secrets_file,
         SCOPES
     )
+
+    @staticmethod
+    def save_metric_value(cls, user, content_type_name, metric_name, metric_value, metric_date):
+        ...
 
     @classmethod
     def get_authorization_url(cls, redirect_url):
@@ -93,6 +125,8 @@ class YouTube(API):
 
         user = saved_credentials.user
 
+        cls.db_connect_user(user)
+
         if not saved_credentials.token and not utils.can_user_connect_more_social_networks(user):
             raise exceptions.APIException("This user can't connect more social networks.")
 
@@ -119,6 +153,7 @@ class YouTube(API):
 
     @classmethod
     def cancel(cls, user):
+        super().cancel(user)
         credentials = models.GoogleCredentials.objects.filter(user=user).first()
         if not credentials.token:
             credentials.delete()
@@ -185,8 +220,8 @@ class YouTube(API):
     def define_period_and_dates(cls, period, start_date, end_date):
         now = datetime.now()
 
-        start_date = start_date or f"{now.year-1}-{now.month}-{'01' if (period == 'day') else now.day}"
-        end_date = end_date or f"{now.year}-{now.month}-{'01' if (period == 'day') else now.day}"
+        start_date = start_date or f"{now.year-1 if period == 'month' else now.year}-{now.month -1 if period=='day' else now.month}-{'01' if (period == 'month') else now.day}"
+        end_date = end_date or f"{now.year}-{now.month}-{'01' if (period == 'month') else now.day}"
 
         start = date.fromisoformat(start_date)
         end = date.fromisoformat(end_date)
@@ -280,14 +315,16 @@ class YouTube(API):
 class TikTok(API):
     @classmethod
     def authorize(cls, user, redirect_url):
+        cls.db_connect_user(user)
         credentials = models.TikTokCredentials.objects.filter(user=user)
         
         if not credentials.exists() and not utils.can_user_connect_more_social_networks(user):
             raise exceptions.APIException("This user can't connect more social networks.")
 
-        models.TikTokCredentials(user=user).save()
-        user.connected_social_networks += 1
-        user.save()
+        if not credentials.exists():
+            models.TikTokCredentials(user=user).save()
+            user.connected_social_networks += 1
+            user.save()
 
         return redirect_url
 
@@ -297,6 +334,9 @@ class TikTok(API):
 
     @classmethod
     def cancel(cls, user):
+        super().cancel(user)
+        user.connected_social_networks -= 1
+        user.save()
         models.TikTokCredentials.objects.filter(user=user).delete()
 
     @classmethod

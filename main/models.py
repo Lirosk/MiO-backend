@@ -170,7 +170,7 @@ class KanbanEvent(TrackingModel):
 
 
 class SocialNetwork(models.Model):
-    name = models.TextField()
+    name = models.TextField(unique=True)
 
 
 class ContentType(models.Model):
@@ -184,6 +184,11 @@ class StatisticMetric(models.Model):
 class MetricValue(models.Model):
     value = models.IntegerField()
     on_date = models.DateField()
+
+
+class UserToSocialNetwork(models.Model):
+    user = models.ForeignKey(MyUser, on_delete=models.CASCADE)
+    social_network = models.ForeignKey(SocialNetwork, on_delete=models.DO_NOTHING)
 
 
 class SocialNetworkToStatisticMetric(models.Model):

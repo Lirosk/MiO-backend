@@ -11,6 +11,7 @@ from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.conf import settings
 
 # Create your views here.
 
@@ -164,6 +165,9 @@ class CancelSubscriptionAPIView(GenericAPIView):
         serialized.is_valid(raise_exception=True)
 
         user = User.objects.get(email=serialized.data["email"])
+
+        if settings.SOCIAL_NETWORKS_LIMIT < user.connected_social_networks:
+            return Response({"message": "Disconnect unwished social networks firstly."}, 400)
 
         try:
             subscription = models.Subscriptions.objects.get(user=user)
